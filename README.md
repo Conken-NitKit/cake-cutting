@@ -2,29 +2,29 @@
 Gitのインストール
 参考: https://qiita.com/T-H9703EnAc/items/4fbe6593d42f9a844b1c
 
-Git Bashというアプリを開きます
-黒い画面が出てくると思います、ここにコマンドを入力します
-
-まずGitHubにSSH接続をします   
+Git Bashというアプリを開く  
+黒い画面が出てくるので、ここにコマンドを入力する  
+  
+まずGitHubにSSH接続をする   
 参考: https://qiita.com/shizuma/items/2b2f873a0034839e47ce
 
 ### 初回のみ
 
 現在のディレクトリを確認する(お好みで)
 ```
-$ pwd
+pwd
 ```
 
 Clone(GitHubからプロジェクトをコピー)する
 ```
-$ git clone git@github.com:Conken-NitKit/cake-cutting.git
+git clone git@github.com:Conken-NitKit/cake-cutting.git
 ```
 
 Cloneしたディレクトリに移動する  
 (Windowsと異なり、ディレクトリの区切りにスラッシュ'/'を用い、ドライブレターは"/c/"のようになる  
 例: `/c/Users/UserName/ProjectName`)
 ```
-$ cd [ディレクトリ]
+cd [ディレクトリ]
 ```
 
 Unity Hubを開き、右上の"追加"を押す  
@@ -36,20 +36,20 @@ Cloneしたフォルダを選択するとUnityプロジェクトが開く
 作業の前に今いるブランチ(履歴の流れの分岐)を確認する  
 featureブランチであることを確認する  
 ```
-$ git status
+git status
 ```
 
 今いるブランチが間違っている場合、チェックアウト(ブランチの移動)をする  
 ```
-$ checkout [ブランチ名]
+checkout [ブランチ名]
 ```
 ブランチを新しく作る場合、-bオプションを付ける  
 ```
-$ checkout -b [ブランチ名]
+checkout -b [ブランチ名]
 ```
 既存のブランチ一覧を確認するにはgit branchコマンドを使う  
 ```
-$ git branch
+git branch
 ```
   
 ～作業する～  
@@ -57,12 +57,12 @@ $ git branch
 作業内容をステージング(記録の対象を選択する)  
 ここでは.を指定することで現在のフォルダ全体を選択  
 ```
-$ git add .
+git add .
 ```
   
 ステージングしたファイルを確認する  
 ```
-$ git status
+git status
 ```
    
 ステージングした内容をコミット(作業内容を記録)する  
@@ -73,12 +73,12 @@ $ git status
 "変更:効率化のためXXのアルゴリズムを変更しました"  
 コミットメッセージの書き方参考: https://qiita.com/konatsu_p/items/dfe199ebe3a7d2010b3e  
 ```
-$ git commit -m "[コミットメッセージ]"
+git commit -m "[コミットメッセージ]"
 ```
   
 プッシュ(リモートリポジトリに反映する)する  
 ```
-$ git push -u origin [ブランチ名]
+git push -u origin [ブランチ名]
 ```
   
 プルリクエスト(自分の変更をリモートリポジトリに反映する提案を送る)を送る  
@@ -89,5 +89,5 @@ GitHubでリポジトリを見るとPull requestsのボタンが出てくるの�
 
 適宜プル(リモートリポジトリの変更点をダウンロード)をする  
 ```
-$ git pull origin [ブランチ名]
+git pull origin [ブランチ名]
 ```
