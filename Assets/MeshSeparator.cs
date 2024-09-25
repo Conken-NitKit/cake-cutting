@@ -15,6 +15,7 @@ public class MeshSeparator
         // 頂点リストを取得
         Vector2[] vertices = mesh2d.vertices.ToArray();
         int[] triangles = mesh2d.triangles.ToArray();
+        Vector2[] uvs = mesh2d.uv.ToArray();
 
         // 各頂点について処理を行う
         for (int i = 0; i < vertices.Length; i++)
@@ -27,8 +28,13 @@ public class MeshSeparator
 
                 FindConnectedVertices(i, vertices, triangles, visited, connectedVertices, connectedTriangles);
 
+                if (connectedVertices.Count < 3)
+                {
+                    continue;
+                }
+
                 // 新しいメッシュを作成
-                Mesh2D newMesh = CreateMesh(vertices, connectedTriangles.ToArray());
+                Mesh2D newMesh = CreateMesh(vertices, connectedTriangles.ToArray(), uvs);
                 separatedMeshes.Add(newMesh);
             }
         }
@@ -36,6 +42,17 @@ public class MeshSeparator
         return separatedMeshes.ToArray();
 
 
+    }
+
+    static public Mesh2D[] SeparateMeshes(params Mesh2D[] mesh2D)
+    {
+        List<Mesh2D> separatedMeshes = new List<Mesh2D>();
+        foreach (Mesh2D mesh in mesh2D)
+        {
+            Mesh2D[] meshes = SeparateMesh(mesh);
+            separatedMeshes.AddRange(meshes);
+        }
+        return separatedMeshes.ToArray();
     }
 
     static private void FindConnectedVertices(int startIndex, Vector2[] vertices, int[] triangles, List<int> visited, List<int> connectedVertices, List<int> connectedTriangles)
@@ -72,16 +89,12 @@ public class MeshSeparator
         }
     }
 
-    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles)
+    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles, Vector2[] uvs)
     {
         Mesh2D newMesh = new Mesh2D();
-        Vector2[] newVertices = new Vector2[vertices.Length];
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            newVertices[i] = vertices[i];
-        }
-        newMesh.vertices = newVertices.ToList();
+        newMesh.vertices = vertices.ToList();
         newMesh.triangles = triangles.ToList();
+        newMesh.uv = uvs.ToList();
         return newMesh;
     }
 }

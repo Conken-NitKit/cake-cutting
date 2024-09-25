@@ -92,6 +92,41 @@ public class Mesh2D
         return mesh;
     }
 
+    public Mesh2D MergeDuplicateVertices()
+    {
+        //同じレイヤーで同じ位置の頂点をマージする
+        //-1は任意のレイヤーとマージできる
+
+        //全ての頂点に対して置換先の頂点を持つDictionaryを作る
+        Dictionary<int, int> vertexIndexMap = new();
+        List<int> replacedIndexes = new();
+
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            if (replacedIndexes.Contains(i)) continue;
+            for (int j = i + 1; j < vertices.Count; j++)
+            {
+                if (vertices[i] == vertices[j])
+                {
+                    vertexIndexMap[j] = i;
+                    replacedIndexes.Add(j);
+                }
+            }
+
+            vertexIndexMap[i] = i;
+        }
+
+        //Dictionaryを使って頂点を置換
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            triangles[i] = vertexIndexMap[triangles[i]];
+        }
+
+        //この方法だと頂点は残る
+
+        return this;
+    }
+
     static Mesh2D ToMesh2D(Mesh mesh)
     {
         Mesh2D mesh2D = new Mesh2D();

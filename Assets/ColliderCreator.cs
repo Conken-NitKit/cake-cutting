@@ -1,94 +1,97 @@
-//https://www.h3xed.com/programming/automatically-create-polygon-collider-2d-from-2d-mesh-in-unity
+////https://www.h3xed.com/programming/automatically-create-polygon-collider-2d-from-2d-mesh-in-unity
 
-using System.Collections.Generic;
-using UnityEngine;
+//using System.Collections.Generic;
+//using System.Linq;
+//using UnityEngine;
 
-public class ColliderCreator
-{
-    static public void SetCollider(Mesh mesh, PolygonCollider2D polygonCollider)
-    {
-        
-        // Get triangles and vertices from mesh
-        int[] triangles = mesh.triangles;
-        Vector3[] vertices = mesh.vertices;
+//public class ColliderCreator
+//{
+//    static public void SetCollider(Mesh mesh, PolygonCollider2D polygonCollider)
+//    {
 
-        // Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
-        Dictionary<string, KeyValuePair<int, int>> edges = new Dictionary<string, KeyValuePair<int, int>>();
-        for (int i = 0; i < triangles.Length; i += 3)
-        {
-            for (int e = 0; e < 3; e++)
-            {
-                int vert1 = triangles[i + e];
-                int vert2 = triangles[i + e + 1 > i + 2 ? i : i + e + 1];
-                string edge = Mathf.Min(vert1, vert2) + ":" + Mathf.Max(vert1, vert2);
-                if (edges.ContainsKey(edge))
-                {
-                    edges.Remove(edge);
-                }
-                else
-                {
-                    edges.Add(edge, new KeyValuePair<int, int>(vert1, vert2));
-                }
-            }
-        }
+//        // Get triangles and vertices from mesh
+//        int[] triangles = mesh.triangles;
+//        Vector3[] vertices = mesh.vertices;
 
-        // Create edge lookup (Key is first vertex, Value is second vertex, of each edge)
-        Dictionary<int, int> lookup = new Dictionary<int, int>();
-        foreach (KeyValuePair<int, int> edge in edges.Values)
-        {
-            if (lookup.ContainsKey(edge.Key) == false)
-            {
-                lookup.Add(edge.Key, edge.Value);
-            }
-        }
+//        // Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
+//        Dictionary<string, KeyValuePair<int, int>> edges = new Dictionary<string, KeyValuePair<int, int>>();
+//        for (int i = 0; i < triangles.Length; i += 3)
+//        {
+//            for (int e = 0; e < 3; e++)
+//            {
+//                int vert1 = triangles[i + e];
+//                int vert2 = triangles[i + e + 1 > i + 2 ? i : i + e + 1];
+//                string edge = Mathf.Min(vert1, vert2) + ":" + Mathf.Max(vert1, vert2);
+//                if (edges.ContainsKey(edge))
+//                {
+//                    edges.Remove(edge);
+//                }
+//                else
+//                {
+//                    edges.Add(edge, new KeyValuePair<int, int>(vert1, vert2));
+//                }
+//            }
+//        }
 
-        
-        polygonCollider.pathCount = 0;
+//        // Create edge lookup (Key is first vertex, Value is second vertex, of each edge)
+//        Dictionary<int, int> lookup = new Dictionary<int, int>();
+//        foreach (KeyValuePair<int, int> edge in edges.Values)
+//        {
+//            if (lookup.ContainsKey(edge.Key) == false)
+//            {
+//                lookup.Add(edge.Key, edge.Value);
+//            }
+//        }
 
-        // Loop through edge vertices in order
-        int startVert = 0;
-        int nextVert = startVert;
-        int highestVert = startVert;
-        List<Vector2> colliderPath = new List<Vector2>();
-        while (true)
-        {
+//        if (lookup.Count == 0) return;
 
-            // Add vertex to collider path
-            colliderPath.Add(vertices[nextVert]);
+//        polygonCollider.pathCount = 0;
 
-            // Get next vertex
-            nextVert = lookup[nextVert];
+//        // Loop through edge vertices in order
+//        int startVert = lookup.Select(x => x.Key).OrderBy(x => x).First();
+//        int nextVert = startVert;
+//        int highestVert = startVert;
+//        List<Vector2> colliderPath = new List<Vector2>();
+//        while (true)
+//        {
 
-            // Store highest vertex (to know what shape to move to next)
-            if (nextVert > highestVert)
-            {
-                highestVert = nextVert;
-            }
+//            Debug.Log(nextVert);
+//            // Add vertex to collider path
+//            colliderPath.Add(vertices[nextVert]);
 
-            // Shape complete
-            if (nextVert == startVert)
-            {
+//            // Get next vertex
+//            nextVert = lookup[nextVert];
 
-                // Add path to polygon collider
-                polygonCollider.pathCount++;
-                polygonCollider.SetPath(polygonCollider.pathCount - 1, colliderPath.ToArray());
-                colliderPath.Clear();
+//            // Store highest vertex (to know what shape to move to next)
+//            if (nextVert > highestVert)
+//            {
+//                highestVert = nextVert;
+//            }
 
-                // Go to next shape if one exists
-                if (lookup.ContainsKey(highestVert + 1))
-                {
+//            // Shape complete
+//            if (nextVert == startVert)
+//            {
 
-                    // Set starting and next vertices
-                    startVert = highestVert + 1;
-                    nextVert = startVert;
+//                // Add path to polygon collider
+//                polygonCollider.pathCount++;
+//                polygonCollider.SetPath(polygonCollider.pathCount - 1, colliderPath.ToArray());
+//                colliderPath.Clear();
 
-                    // Continue to next loop
-                    continue;
-                }
+//                // Go to next shape if one exists
+//                if (lookup.ContainsKey(highestVert + 1))
+//                {
 
-                // No more verts
-                break;
-            }
-        }
-    }
-}
+//                    // Set starting and next vertices
+//                    startVert = highestVert + 1;
+//                    nextVert = startVert;
+
+//                    // Continue to next loop
+//                    continue;
+//                }
+
+//                // No more verts
+//                break;
+//            }
+//        }
+//    }
+//}

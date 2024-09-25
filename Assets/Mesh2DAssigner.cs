@@ -28,7 +28,7 @@ public class Mesh2DAssigner : MonoBehaviour
         {
             mesh2d = value;
             meshFilter.mesh = mesh2d.ToMesh();
-            ColliderCreator.SetCollider(mesh2d.ToMesh(), polygonCollider);
+            //ColliderCreator.SetCollider(mesh2d.ToMesh(), polygonCollider);
         }
     }
     

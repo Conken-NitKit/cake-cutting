@@ -9,12 +9,34 @@ using static UnityEngine.Rendering.HableCurve;
 [RequireComponent(typeof(MeshRenderer))]
 public class MeshGenerator : MonoBehaviour
 {
-    public int segments = 36;  // ‰~‚Ì•ªŠ„”i’¸“_‚Ì”j
+    public int segments = 4;  // ‰~‚Ì•ªŠ„”i’¸“_‚Ì”j
     public float radius = 1f;  // ‰~‚Ì”¼Œa
 
     void Start()
     {
-        this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateDonutMesh();
+        this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateDonutMesh().MergeDuplicateVertices();
+    }
+
+    Mesh2D CreateTriangleMesh()
+    {
+        Mesh2D mesh2D = new Mesh2D();
+        mesh2D.vertices = new List<Vector2>()
+        {
+            new Vector2(0, 0),
+            new Vector2(1, 0),
+            new Vector2(0, 1)
+        };
+        mesh2D.triangles = new List<int>()
+        {
+            0, 1, 2
+        };
+        mesh2D.uv = new List<Vector2>()
+        {
+            new Vector2(0, 0),
+            new Vector2(1, 0),
+            new Vector2(0, 1)
+        };
+        return mesh2D;
     }
 
     Mesh2D GenerateCircleMesh()
