@@ -8,28 +8,29 @@ public class PolygonCutter
 {
     private class MeshCutSide
     {
-        private List<(Vector2 position, int layer)> vertices = new();
-        private List<int> triangles = new();
-        private List<Vector2> uvs = new();
+        public List<(Vector2 position, int layer)> vertices = new();
+        public List<int> triangles = new();
+        public List<Vector2> uvs = new();
+        public List<int> disconnecteds = new();
 
         public void ClearAll()
         {
             vertices.Clear();
             triangles.Clear();
             uvs.Clear();
+            disconnecteds.Clear();
         }
 
         //元の頂点を参照して三角形を追加
-        public void AddTriangle(int index1, int index2, int index3, int layer, bool forceClockWise = true)
+        public void AddTriangle(int index1, int index2, int index3, int layer, bool isDisconnected1, bool isDisconnected2, bool isDisconnected3, bool forceClockWise = true)
         {
-
-            Debug.Log($"Addtriangle_1: {index1}, {index2}, {index3}");
             var nowIndex = vertices.Count;
             if (forceClockWise)
             {
                 if (IsClockWise(victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]))
                 {
                     (index3, index2) = (index2, index3);
+                    (isDisconnected3, isDisconnected2) = (isDisconnected2, isDisconnected3);
 
                     triangles.Add(nowIndex + 0);
                     triangles.Add(nowIndex + 2);
@@ -52,8 +53,11 @@ public class PolygonCutter
             }
 
             vertices.Add((victimMesh.vertices[index1], layer));
+            if (isDisconnected1) disconnecteds.Add(nowIndex + 0);
             vertices.Add((victimMesh.vertices[index2], layer));
+            if (isDisconnected2) disconnecteds.Add(nowIndex + 1);
             vertices.Add((victimMesh.vertices[index3], layer));
+            if (isDisconnected3) disconnecteds.Add(nowIndex + 2);
 
 
             uvs.Add(victimMesh.uv[index1]);
@@ -61,6 +65,52 @@ public class PolygonCutter
             uvs.Add(victimMesh.uv[index3]);
 
         }
+
+        public void AddTriangle(int index1, int index2, int index3, int layer1, int layer2, int layer3, bool isDisconnected1, bool isDisconnected2, bool isDisconnected3, bool forceClockWise = true)
+        {
+            var nowIndex = vertices.Count;
+            if (forceClockWise)
+            {
+                if (IsClockWise(victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]))
+                {
+                    (index3, index2) = (index2, index3);
+                    (layer3, layer2) = (layer2, layer3);
+                    (isDisconnected3, isDisconnected2) = (isDisconnected2, isDisconnected3);
+
+                    triangles.Add(nowIndex + 0);
+                    triangles.Add(nowIndex + 2);
+                    triangles.Add(nowIndex + 1);
+
+                }
+                else
+                {
+                    triangles.Add(nowIndex + 0);
+                    triangles.Add(nowIndex + 1);
+                    triangles.Add(nowIndex + 2);
+
+                }
+            }
+            else
+            {
+                triangles.Add(nowIndex + 2);
+                triangles.Add(nowIndex + 1);
+                triangles.Add(nowIndex + 0);
+            }
+
+            vertices.Add((victimMesh.vertices[index1], layer1));
+            if (isDisconnected1) disconnecteds.Add(nowIndex + 0);
+            vertices.Add((victimMesh.vertices[index2], layer2));
+            if (isDisconnected2) disconnecteds.Add(nowIndex + 1);
+            vertices.Add((victimMesh.vertices[index3], layer3));
+            if (isDisconnected3) disconnecteds.Add(nowIndex + 2);
+
+
+            uvs.Add(victimMesh.uv[index1]);
+            uvs.Add(victimMesh.uv[index2]);
+            uvs.Add(victimMesh.uv[index3]);
+
+        }
+
 
         public void AddTriangle(Vector2 point1, Vector2 point2, Vector2 point3, Vector2 uv1, Vector2 uv2, Vector2 uv3, int layer1, int layer2, int layer3, bool forceClockWise = true)
         {
@@ -76,8 +126,6 @@ public class PolygonCutter
                 triangles.Add(nowIndex + 0);
                 triangles.Add(nowIndex + 1);
 
-                Debug.Log($"Fixed: {point1}, {point2}, {point3}");
-
             }
             else
             {
@@ -85,8 +133,6 @@ public class PolygonCutter
                 triangles.Add(nowIndex + 2);
                 triangles.Add(nowIndex + 1);
                 triangles.Add(nowIndex + 0);
-                Debug.Log($"{point1}, {point2}, {point3}");
-
             }
 
 
@@ -100,12 +146,50 @@ public class PolygonCutter
 
         }
 
+        public void AddTriangle(Vector2 point1, Vector2 point2, Vector2 point3, Vector2 uv1, Vector2 uv2, Vector2 uv3, int layer1, int layer2, int layer3, bool isDisconnected1, bool isDIsconnected2, bool isDisconnected3, bool forceClockWise = true)
+        {
+
+            var nowIndex = vertices.Count;
+            if (forceClockWise && IsClockWise(point1, point2, point3))
+            {
+                (point3, point2) = (point2, point3);
+                (uv3, uv2) = (uv2, uv3);
+                (layer3, layer2) = (layer2, layer3);
+
+                triangles.Add(nowIndex + 2);
+                triangles.Add(nowIndex + 0);
+                triangles.Add(nowIndex + 1);
+
+            }
+            else
+            {
+
+                triangles.Add(nowIndex + 2);
+                triangles.Add(nowIndex + 1);
+                triangles.Add(nowIndex + 0);
+            }
+
+
+            vertices.Add((point1, layer1));
+            if (isDisconnected1) { disconnecteds.Add(nowIndex + 0); }
+            vertices.Add((point2, layer2));
+            if (isDIsconnected2) { disconnecteds.Add(nowIndex + 1); }
+            vertices.Add((point3, layer3));
+            if (isDisconnected3) { disconnecteds.Add(nowIndex + 2); }
+
+            uvs.Add(uv1);
+            uvs.Add(uv2);
+            uvs.Add(uv3);
+
+        }
+
         public Mesh2D ToMesh2D()
         {
             var mesh = new Mesh2D();
             mesh.vertices = vertices.Select(x => x.position).ToList();
             mesh.triangles = triangles;
             mesh.uv = uvs;
+            mesh.disconnectedVertices = new(disconnecteds);
             return mesh;
         }
 
@@ -118,13 +202,16 @@ public class PolygonCutter
                 triangles.Add(triangle + nowIndex);
             }
             uvs.AddRange(meshCutSide.uvs);
+            disconnecteds.AddRange(meshCutSide.disconnecteds.Select(x => x + nowIndex));
 
         }
 
         public void MergeDuplicateVertices()
         {
             //同じレイヤーで同じ位置の頂点をマージする
-            //-1は任意のレイヤーとマージできる
+            //-1は-4以外の任意のレイヤーとマージできる
+            //-4は一切マージされない
+            //このマジックナンバーの実装は最悪なのでいつかどうにかしたい
 
             //全ての頂点に対して置換先の頂点を持つDictionaryを作る
             Dictionary<int, int> vertexIndexMap = new();
@@ -135,6 +222,7 @@ public class PolygonCutter
                 if (replacedIndexes.Contains(i)) continue;
                 for (int j = i + 1; j < vertices.Count; j++)
                 {
+                    if (vertices[i].layer == -4 || vertices[j].layer == -4) continue;
                     if (vertices[i].position == vertices[j].position && (vertices[i].layer == -1 || vertices[j].layer == -1 || vertices[i].layer == vertices[j].layer))
                     {
                         vertexIndexMap[j] = i;
@@ -145,13 +233,43 @@ public class PolygonCutter
                 vertexIndexMap[i] = i;
             }
 
+            replacedIndexes.Sort();
+            replacedIndexes = replacedIndexes.Distinct().ToList();
             //Dictionaryを使って頂点を置換
             for (int i = 0; i < triangles.Count; i++)
             {
                 triangles[i] = vertexIndexMap[triangles[i]];
             }
 
-            //この方法だと頂点は残る
+            //使用されなくなった頂点を削除する
+            var trianglesTmp = triangles.ToList();
+            foreach (var replacedIndex in replacedIndexes)
+            {
+                disconnecteds.RemoveAll(x => x == replacedIndex);
+            }
+            for (int i = replacedIndexes.Count - 1; i >= 0; i--)
+            {
+                vertices.RemoveAt(replacedIndexes[i]);
+                uvs.RemoveAt(replacedIndexes[i]);
+                //disconnecteds.RemoveAll(x => x == replacedIndexes[i]);
+
+
+                //削除した頂点より後ろの頂点のインデックスを調整
+                for (int j = 0; j < triangles.Count; j++)
+                {
+                    if (trianglesTmp[j] > replacedIndexes[i])
+                    {
+                        triangles[j]--;
+                    }
+                }
+                for (int j = 0; j < disconnecteds.Count; j++)
+                {
+                    if (disconnecteds[j] > replacedIndexes[i])
+                    {
+                        disconnecteds[j]--;
+                    }
+                }
+            }
         }
 
     }
@@ -220,7 +338,6 @@ public class PolygonCutter
         }
         else
         {
-            //Debug.Log(String.Join(',',cwMesh.triangles));
             //return new Mesh2D[] { cwMesh, acwMesh };
             return MeshSeparator.SeparateMeshes(cwMesh, acwMesh);
         }
@@ -407,6 +524,8 @@ public class PolygonCutter
     /// <returns></returns>
     private static bool SegmentCutTriangle(int index1, int index2, int index3, Vector2 startPoint, Vector2 endPoint)
     {
+        #region 頂点の振り分け
+
         var isClockWise1 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index1]);
         var isClockWise2 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index2]);
         var isClockWise3 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index3]);
@@ -414,13 +533,20 @@ public class PolygonCutter
         //三角形のすべての頂点が一方の側にある場合はカットせず直接追加する
         if (isClockWise1 == isClockWise2 && isClockWise2 == isClockWise3)
         {
+            var isDisconnected1 = victimMesh.disconnectedVertices.Contains(index1);
+            var isDisconnected2 = victimMesh.disconnectedVertices.Contains(index2);
+            var isDisconnected3 = victimMesh.disconnectedVertices.Contains(index3);
+            var layer1 = isDisconnected1 ? -4 : -1;
+            var layer2 = isDisconnected2 ? -4 : -1;
+            var layer3 = isDisconnected3 ? -4 : -1;
+
             if (isClockWise1)
             {
-                cwSide.AddTriangle(index1, index2, index3, -1);
+                cwSide.AddTriangle(index1, index2, index3, layer1, layer2, layer3, isDisconnected1, isDisconnected2, isDisconnected3);
             }
             else
             {
-                acwSide.AddTriangle(index1, index2, index3, -1);
+                acwSide.AddTriangle(index1, index2, index3, layer1, layer2, layer3, isDisconnected1, isDisconnected2, isDisconnected3);
             }
 
             return false;
@@ -430,11 +556,13 @@ public class PolygonCutter
         Vector2[] cwExistingUvs = new Vector2[3];
         Vector2[] cwNewPoints = new Vector2[2];
         Vector2[] cwNewUvs = new Vector2[2];
+        int[] cwNewLayers = new int[2];
 
         Vector2[] acwExistingPoints = new Vector2[3];
         Vector2[] acwExistingUvs = new Vector2[3];
         Vector2[] acwNewPoints = new Vector2[2];
         Vector2[] acwNewUvs = new Vector2[2];
+        int[] acwNewLayers = new int[2];
 
 
         bool triangleIsCwSide = false;
@@ -445,6 +573,25 @@ public class PolygonCutter
         var isLineIntersectingCutter1_2 = HasIntersection(victimMesh.vertices[index1], victimMesh.vertices[index2], startPoint, endPoint);
         var isLineIntersectingCutter2_3 = HasIntersection(victimMesh.vertices[index2], victimMesh.vertices[index3], startPoint, endPoint);
         var isLineIntersectingCutter3_1 = HasIntersection(victimMesh.vertices[index3], victimMesh.vertices[index1], startPoint, endPoint);
+
+        var IsLineIntersectingDisconnected1_2 = false;
+        var IsLineIntersectingDisconnected2_3 = false;
+        var IsLineIntersectingDisconnected3_1 = false;
+
+        if (isLineIntersectingCutter1_2)
+        {
+            IsLineIntersectingDisconnected1_2 = victimMesh.disconnectedVertices.Contains(index1) && victimMesh.disconnectedVertices.Contains(index2);
+        }
+        if (isLineIntersectingCutter2_3)
+        {
+            IsLineIntersectingDisconnected2_3 = victimMesh.disconnectedVertices.Contains(index2) && victimMesh.disconnectedVertices.Contains(index3);
+        }
+        if (isLineIntersectingCutter3_1)
+        {
+            IsLineIntersectingDisconnected3_1 = victimMesh.disconnectedVertices.Contains(index3) && victimMesh.disconnectedVertices.Contains(index1);
+        }
+
+        var isCutOrderForward = true;
 
         // 三角形の辺に対する外積を計算し、符号を返すヘルパー関数
         static float Sign(Vector2 p1, Vector2 p2, Vector2 p3)
@@ -493,7 +640,13 @@ public class PolygonCutter
         //切断面と交差していない場合、切断の必要はない
         if (!(isLineIntersectingCutter1_2 || isLineIntersectingCutter2_3 || isLineIntersectingCutter3_1))
         {
-            cwSide.AddTriangle(index1, index2, index3, -1);
+            var isDisconnected1 = victimMesh.disconnectedVertices.Contains(index1);
+            var isDisconnected2 = victimMesh.disconnectedVertices.Contains(index2);
+            var isDisconnected3 = victimMesh.disconnectedVertices.Contains(index3);
+            var layer1 = isDisconnected1 ? -4 : -1;
+            var layer2 = isDisconnected2 ? -4 : -1;
+            var layer3 = isDisconnected3 ? -4 : -1;
+            cwSide.AddTriangle(index1, index2, index3, layer1, layer2, layer3, isDisconnected1, isDisconnected2, isDisconnected3);
             return true;
         }
 
@@ -504,14 +657,23 @@ public class PolygonCutter
         {
             IsTriangleOnCutEdge = true;
 
-            
 
 
 
+
+            // ここで-4のレイヤーを追加するのはまずい！-4のレイヤーは既存の切断面にのみ使うべき？そんなことないかも
             if (isLineIntersectingCutter1_2)
             {
                 GetIntersection(victimMesh.vertices[index1], victimMesh.vertices[index2], startPoint, endPoint, ref cwNewPoints[0]);
                 cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index1], victimMesh.uv[index2], Vector2.Distance(victimMesh.vertices[index1], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index1], victimMesh.vertices[index2]));
+                if (IsLineIntersectingDisconnected1_2)
+                {
+                    cwNewLayers[0] = -4;
+                }
+                else
+                {
+                    cwNewLayers[0] = 0;
+                }
                 cwExistingPoints[0] = victimMesh.vertices[index1];
                 cwExistingPoints[1] = victimMesh.vertices[index2];
                 cwExistingPoints[2] = victimMesh.vertices[index3];
@@ -524,6 +686,14 @@ public class PolygonCutter
             {
                 GetIntersection(victimMesh.vertices[index2], victimMesh.vertices[index3], startPoint, endPoint, ref cwNewPoints[0]);
                 cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index2], victimMesh.uv[index3], Vector2.Distance(victimMesh.vertices[index2], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index2], victimMesh.vertices[index3]));
+                if (IsLineIntersectingDisconnected2_3)
+                {
+                    cwNewLayers[0] = -4;
+                }
+                else
+                {
+                    cwNewLayers[0] = 0;
+                }
                 cwExistingPoints[0] = victimMesh.vertices[index2];
                 cwExistingPoints[1] = victimMesh.vertices[index3];
                 cwExistingPoints[2] = victimMesh.vertices[index1];
@@ -536,6 +706,14 @@ public class PolygonCutter
             {
                 GetIntersection(victimMesh.vertices[index3], victimMesh.vertices[index1], startPoint, endPoint, ref cwNewPoints[0]);
                 cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index3], victimMesh.uv[index1], Vector2.Distance(victimMesh.vertices[index3], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index3], victimMesh.vertices[index1]));
+                if (IsLineIntersectingDisconnected3_1)
+                {
+                    cwNewLayers[0] = -4;
+                }
+                else
+                {
+                    cwNewLayers[0] = 0;
+                }
                 cwExistingPoints[0] = victimMesh.vertices[index3];
                 cwExistingPoints[1] = victimMesh.vertices[index1];
                 cwExistingPoints[2] = victimMesh.vertices[index2];
@@ -544,8 +722,11 @@ public class PolygonCutter
                 cwExistingUvs[1] = victimMesh.uv[index1];
                 cwExistingUvs[2] = victimMesh.uv[index2];
             }
-            cwNewPoints[1] = PointInTriangle(startPoint, victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]) ? startPoint : endPoint;
+
+            isCutOrderForward = PointInTriangle(startPoint, victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]);
+            cwNewPoints[1] = isCutOrderForward ? startPoint : endPoint;
             cwNewUvs[1] = GetInterpolatedUV(cwNewPoints[1], victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3], victimMesh.uv[index1], victimMesh.uv[index2], victimMesh.uv[index3]);
+            cwNewLayers[1] = 0;
 
         }
 
@@ -583,6 +764,26 @@ public class PolygonCutter
             GetIntersection(victimMesh.vertices[index1], victimMesh.vertices[index3], startPoint, endPoint, ref cwNewPoints[1]);
             acwNewPoints[0] = cwNewPoints[0];
             acwNewPoints[1] = cwNewPoints[1];
+            if (IsLineIntersectingDisconnected1_2)
+            {
+                cwNewLayers[0] = -4;
+                acwNewLayers[0] = -4;
+            }
+            else
+            {
+                cwNewLayers[0] = 0;
+                acwNewLayers[0] = 1;
+            }
+            if (IsLineIntersectingDisconnected2_3)
+            {
+                cwNewLayers[1] = -4;
+                acwNewLayers[1] = -4;
+            }
+            else
+            {
+                cwNewLayers[1] = 0;
+                acwNewLayers[1] = 1;
+            }
 
             //UVを補完する
             cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index1], victimMesh.uv[index2], Vector2.Distance(victimMesh.vertices[index1], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index1], victimMesh.vertices[index2]));
@@ -619,6 +820,26 @@ public class PolygonCutter
             GetIntersection(victimMesh.vertices[index2], victimMesh.vertices[index1], startPoint, endPoint, ref cwNewPoints[1]);
             acwNewPoints[0] = cwNewPoints[0];
             acwNewPoints[1] = cwNewPoints[1];
+            if (IsLineIntersectingDisconnected2_3)
+            {
+                cwNewLayers[0] = -4;
+                acwNewLayers[0] = -4;
+            }
+            else
+            {
+                cwNewLayers[0] = 0;
+                acwNewLayers[0] = 1;
+            }
+            if (IsLineIntersectingDisconnected1_2)
+            {
+                cwNewLayers[1] = -4;
+                acwNewLayers[1] = -4;
+            }
+            else
+            {
+                cwNewLayers[1] = 0;
+                acwNewLayers[1] = 1;
+            }
 
             cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index2], victimMesh.uv[index3], Vector2.Distance(victimMesh.vertices[index2], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index2], victimMesh.vertices[index3]));
             cwNewUvs[1] = Vector2.Lerp(victimMesh.uv[index2], victimMesh.uv[index1], Vector2.Distance(victimMesh.vertices[index2], cwNewPoints[1]) / Vector2.Distance(victimMesh.vertices[index2], victimMesh.vertices[index1]));
@@ -654,6 +875,26 @@ public class PolygonCutter
             GetIntersection(victimMesh.vertices[index3], victimMesh.vertices[index2], startPoint, endPoint, ref cwNewPoints[1]);
             acwNewPoints[0] = cwNewPoints[0];
             acwNewPoints[1] = cwNewPoints[1];
+            if (IsLineIntersectingDisconnected3_1)
+            {
+                cwNewLayers[0] = -4;
+                acwNewLayers[0] = -4;
+            }
+            else
+            {
+                cwNewLayers[0] = 0;
+                acwNewLayers[0] = 1;
+            }
+            if (IsLineIntersectingDisconnected2_3)
+            {
+                cwNewLayers[1] = -4;
+                acwNewLayers[1] = -4;
+            }
+            else
+            {
+                cwNewLayers[1] = 0;
+                acwNewLayers[1] = 1;
+            }
 
             cwNewUvs[0] = Vector2.Lerp(victimMesh.uv[index3], victimMesh.uv[index1], Vector2.Distance(victimMesh.vertices[index3], cwNewPoints[0]) / Vector2.Distance(victimMesh.vertices[index3], victimMesh.vertices[index1]));
             cwNewUvs[1] = Vector2.Lerp(victimMesh.uv[index3], victimMesh.uv[index2], Vector2.Distance(victimMesh.vertices[index3], cwNewPoints[1]) / Vector2.Distance(victimMesh.vertices[index3], victimMesh.vertices[index2]));
@@ -661,7 +902,9 @@ public class PolygonCutter
             acwNewUvs[1] = cwNewUvs[1];
         }
 
+        #endregion
 
+        #region 三角形を作る
 
         //三角形を作る
         if (IsTriangleOnCutEdge)
@@ -671,31 +914,37 @@ public class PolygonCutter
             //cwSide.AddTriangle(cwExistingPoints[2], cwNewPoints[1], cwNewPoints[0], cwExistingUvs[2], cwNewUvs[1], cwNewUvs[0]);
             //cwSide.AddTriangle(cwExistingPoints[2], cwExistingPoints[0], cwNewPoints[1], cwExistingUvs[2], cwExistingUvs[0], cwNewUvs[1]);
 
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[0], cwExistingPoints[2], cwNewUvs[1], cwExistingUvs[0], cwExistingUvs[2], 0, 0, 0);
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[2], cwExistingPoints[1], cwNewUvs[1], cwExistingUvs[2], cwExistingUvs[1], 0, 0, 0);
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[1], cwNewPoints[0], cwNewUvs[1], cwExistingUvs[1], cwNewUvs[0], 0, 1, 1);
-            cwSide.AddTriangle(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0], cwNewUvs[1], cwNewUvs[0], cwExistingUvs[0], 0, 1, 1);
-
+            var isClockWiseExisting0 = isCutOrderForward ? IsClockWise(cwNewPoints[0], cwNewPoints[1], cwExistingPoints[0]) : IsClockWise(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0]);
+            var isClockWiseExisting1 = isCutOrderForward ? IsClockWise(cwNewPoints[0], cwNewPoints[1], cwExistingPoints[1]) : IsClockWise(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[1]);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[0], cwExistingPoints[2], cwNewUvs[1], cwExistingUvs[0], cwExistingUvs[2], cwNewLayers[1], -1, -1, true, false, false);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[2], cwExistingPoints[1], cwNewUvs[1], cwExistingUvs[2], cwExistingUvs[1], cwNewLayers[1], -1, -1, true, false, false);
+            //cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[1], cwNewPoints[0], cwNewUvs[1], cwExistingUvs[1], cwNewUvs[0], cwNewLayers[1], 1, isClockWiseExisting0 ? 0 : 1, true, false, true);
+            //cwSide.AddTriangle(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0], cwNewUvs[1], cwNewUvs[0], cwExistingUvs[0], cwNewLayers[1], isClockWiseExisting1 ? 0 : 1, 1, true, true, false);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[1], cwNewPoints[0], cwNewUvs[1], cwExistingUvs[1], cwNewUvs[0], cwNewLayers[1], -1, cwNewLayers[0], true, false, true);
+            cwSide.AddTriangle(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0], cwNewUvs[1], cwNewUvs[0], cwExistingUvs[0], cwNewLayers[1], cwNewLayers[0], -1, true, true, false);
             return true;
         }
         else if (triangleIsCwSide)
         {
             //時計回り側は三角形1個
-            cwSide.AddTriangle(cwExistingPoints[0], cwNewPoints[1], cwNewPoints[0], cwExistingUvs[0], cwNewUvs[1], cwNewUvs[0], 0, 0, 0);
+            cwSide.AddTriangle(cwExistingPoints[0], cwNewPoints[1], cwNewPoints[0], cwExistingUvs[0], cwNewUvs[1], cwNewUvs[0], -1, cwNewLayers[1], cwNewLayers[0], false, true, true);
 
             //反時計回り側は三角形2個
-            acwSide.AddTriangle(acwExistingPoints[1], acwExistingPoints[0], acwNewPoints[0], acwExistingUvs[1], acwExistingUvs[0], acwNewUvs[0], 1, 1, 1);
-            acwSide.AddTriangle(acwExistingPoints[1], acwNewPoints[0], acwNewPoints[1], acwExistingUvs[1], acwNewUvs[0], acwNewUvs[1], 1, 1, 1);
+            acwSide.AddTriangle(acwExistingPoints[1], acwExistingPoints[0], acwNewPoints[0], acwExistingUvs[1], acwExistingUvs[0], acwNewUvs[0], -1, -1, acwNewLayers[0], false, false, true);
+            acwSide.AddTriangle(acwExistingPoints[1], acwNewPoints[0], acwNewPoints[1], acwExistingUvs[1], acwNewUvs[0], acwNewUvs[1], -1, acwNewLayers[0], acwNewLayers[1], false, true, true);
         }
         else
         {
             //反時計回り側は三角形1個
-            acwSide.AddTriangle(acwExistingPoints[0], acwNewPoints[1], acwNewPoints[0], acwExistingUvs[0], acwNewUvs[1], acwNewUvs[0], 1, 1, 1);
+            acwSide.AddTriangle(acwExistingPoints[0], acwNewPoints[1], acwNewPoints[0], acwExistingUvs[0], acwNewUvs[1], acwNewUvs[0], -1, acwNewLayers[1], acwNewLayers[0], false, true, true);
 
             //時計回り側は三角形2個
-            cwSide.AddTriangle(cwExistingPoints[1], cwExistingPoints[0], cwNewPoints[0], cwExistingUvs[1], cwExistingUvs[0], cwNewUvs[0], 0, 0, 0);
-            cwSide.AddTriangle(cwExistingPoints[1], cwNewPoints[0], cwNewPoints[1], cwExistingUvs[1], cwNewUvs[0], cwNewUvs[1], 0, 0, 0);
+            cwSide.AddTriangle(cwExistingPoints[1], cwExistingPoints[0], cwNewPoints[0], cwExistingUvs[1], cwExistingUvs[0], cwNewUvs[0], -1, -1, acwNewLayers[0], false, false, true);
+            cwSide.AddTriangle(cwExistingPoints[1], cwNewPoints[0], cwNewPoints[1], cwExistingUvs[1], cwNewUvs[0], cwNewUvs[1], -1, cwNewLayers[0], cwNewLayers[1], false, true, true);
         }
+
+        #endregion
+
         return false;
     }
 

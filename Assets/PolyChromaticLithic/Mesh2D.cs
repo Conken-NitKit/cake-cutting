@@ -1,10 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using System.Linq;
+using System;
 
 public class Mesh2D
 {
     // 頂点座標
     public List<Vector2> vertices { get; set; }
+
+    //切断面の頂点のマージを防ぐため、切断部分を保管し対象外にする
+    public HashSet<int> disconnectedVertices { get; set; }
 
     // 三角形（インデックスのリスト）
     public List<int> triangles { get; set; }
@@ -18,6 +24,7 @@ public class Mesh2D
         vertices = new List<Vector2>();
         triangles = new List<int>();
         uv = new List<Vector2>();
+        disconnectedVertices = new HashSet<int>();
     }
 
     // 頂点の追加
@@ -79,17 +86,26 @@ public class Mesh2D
         Mesh mesh = new Mesh();
 
         Vector3[] meshVertices = new Vector3[vertices.Count];
+        Color[] colors = new Color[vertices.Count];
         for (int i = 0; i < vertices.Count; i++)
         {
             meshVertices[i] = new Vector3(vertices[i].x, vertices[i].y, 0);
+            colors[i] = disconnectedVertices.Contains(i) ? Color.red : Color.white;
         }
+        Debug.Log(String.Join(' ', disconnectedVertices));
 
         mesh.vertices = meshVertices;
         mesh.triangles = triangles.ToArray();
         mesh.uv = uv.ToArray();
+        mesh.colors = colors;
         mesh.RecalculateNormals();
 
         return mesh;
+
+        Color GetRandomColor()
+        {
+            return new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+        }
     }
 
     public Mesh2D MergeDuplicateVertices()
@@ -106,7 +122,7 @@ public class Mesh2D
             if (replacedIndexes.Contains(i)) continue;
             for (int j = i + 1; j < vertices.Count; j++)
             {
-                if (vertices[i] == vertices[j])
+                if (!disconnectedVertices.Contains(i) && !disconnectedVertices.Contains(j) && vertices[i] == vertices[j])
                 {
                     vertexIndexMap[j] = i;
                     replacedIndexes.Add(j);
@@ -122,7 +138,33 @@ public class Mesh2D
             triangles[i] = vertexIndexMap[triangles[i]];
         }
 
-        //この方法だと頂点は残る
+        replacedIndexes.Sort();
+        replacedIndexes = replacedIndexes.Distinct().ToList();
+        //使用されなくなった頂点を削除する
+        for(int i = 0; i < replacedIndexes.Count; i++)
+        {
+            vertices.RemoveAt(replacedIndexes[i]);
+            uv.RemoveAt(replacedIndexes[i]);
+
+            //削除した頂点より後ろの頂点のインデックスを調整
+            for (int j = 0; j < triangles.Count; j++)
+            {
+                if (triangles[j] > replacedIndexes[i])
+                {
+                    triangles[j]--;
+                }
+            }
+            var disconnectedVerticesTmp = disconnectedVertices.ToList();
+            for (int j = 0; j < disconnectedVerticesTmp.Count; j++)
+            {
+                if (disconnectedVerticesTmp[j] > replacedIndexes[i])
+                {
+                    disconnectedVertices.Remove(disconnectedVerticesTmp[j]);
+                    disconnectedVertices.Add(disconnectedVerticesTmp[j] - 1);
+                }
+            }
+
+        }
 
         return this;
     }

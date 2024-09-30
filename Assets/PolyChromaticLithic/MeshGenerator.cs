@@ -14,7 +14,7 @@ public class MeshGenerator : MonoBehaviour
 
     void Start()
     {
-        this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateDonutMesh().MergeDuplicateVertices();
+        this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateTriangleMesh().MergeDuplicateVertices();
     }
 
     Mesh2D CreateTriangleMesh()

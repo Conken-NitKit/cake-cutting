@@ -13,12 +13,12 @@ public class Cuttable : MonoBehaviour
 
     public void Cut(Vector2 startPoint, Vector2 endPoint)
     {
-        startPoint += (Vector2)this.transform.position;
-        endPoint += (Vector2)this.transform.position;
+        startPoint = (Vector2)this.transform.InverseTransformPoint(startPoint);
+        endPoint = (Vector2)this.transform.InverseTransformPoint(endPoint);
         var cutMeshes = PolygonCutter.SegmentCut(this.GetComponent<Mesh2DAssigner>().Mesh2D, startPoint, endPoint);
         foreach (var cutMesh in cutMeshes)
         {
-            GameObject go = new GameObject("name",typeof(PolygonCollider2D) ,typeof(MeshFilter), typeof(MeshRenderer), typeof(Mesh2DAssigner), typeof(Cuttable));
+            GameObject go = new GameObject("Cake",typeof(MeshFilter), typeof(MeshRenderer), typeof(Mesh2DAssigner), typeof(Cuttable));
             go.transform.position = this.transform.position;
             go.transform.rotation = this.transform.rotation;
             go.transform.localScale = this.transform.localScale;
