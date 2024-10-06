@@ -16,7 +16,7 @@ public class MeshSeparator
         Vector2[] vertices = mesh2d.vertices.ToArray();
         int[] triangles = mesh2d.triangles.ToArray();
         Vector2[] uvs = mesh2d.uv.ToArray();
-        HashSet<int> disconnectedVertices = mesh2d.disconnectedVertices;
+        HashSet<Vector2> disconnectedVertices = mesh2d.disconnectedVertices;
 
         // 各頂点について処理を行う
         for (int i = 0; i < vertices.Length; i++)
@@ -27,9 +27,8 @@ public class MeshSeparator
                 List<int> connectedVertices = new List<int>();
                 //List<int> connectedTriangles = new List<int>();
                 HashSet<Triangle> connectedTriangles = new HashSet<Triangle>();
-                HashSet<int> newDisconnectedVertices = new HashSet<int>();
 
-                FindConnectedVertices(i, vertices, triangles,disconnectedVertices , visited, connectedVertices, connectedTriangles, newDisconnectedVertices);
+                FindConnectedVertices(i, vertices, triangles, disconnectedVertices , visited, connectedVertices, connectedTriangles);
 
                 if (connectedVertices.Count < 3)
                 {
@@ -38,7 +37,7 @@ public class MeshSeparator
 
                 int[] trianglesTmp = connectedTriangles.SelectMany(t => new int[]{ t.v1, t.v2, t.v3 }).ToArray();
                 // 新しいメッシュを作成
-                Mesh2D newMesh = CreateMesh(vertices, trianglesTmp, uvs, newDisconnectedVertices);
+                Mesh2D newMesh = CreateMesh(vertices, trianglesTmp, uvs, disconnectedVertices);
                 separatedMeshes.Add(newMesh);
             }
         }
@@ -59,7 +58,7 @@ public class MeshSeparator
         return separatedMeshes.ToArray();
     }
 
-    static private void FindConnectedVertices(int startIndex, Vector2[] vertices, int[] triangles, HashSet<int> disconnectedVertices, HashSet<int> visited, List<int> connectedVertices, HashSet<Triangle> connectedTriangles, HashSet<int> newdisconnectedVertices)
+    static private void FindConnectedVertices(int startIndex, Vector2[] vertices, int[] triangles, HashSet<Vector2> disconnectedVertices, HashSet<int> visited, List<int> connectedVertices, HashSet<Triangle> connectedTriangles)
     {
         Stack<int> stack = new Stack<int>();
         stack.Push(startIndex);
@@ -69,11 +68,7 @@ public class MeshSeparator
         {
             int currentIndex = stack.Pop();
             connectedVertices.Add(currentIndex);
-            if (disconnectedVertices.Contains(currentIndex))
-            {
-                newdisconnectedVertices.Add(currentIndex);
-            }
-
+            
             // 頂点に接続しているすべての三角形を探す
             for (int i = 0; i < triangles.Length; i += 3)
             {
@@ -97,13 +92,13 @@ public class MeshSeparator
         }
     }
 
-    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles, Vector2[] uvs, HashSet<int> newDisconnectedVertices)
+    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles, Vector2[] uvs, HashSet<Vector2> disconnectedVertices)
     {
         Mesh2D newMesh = new Mesh2D();
         newMesh.vertices = vertices.ToList();
         newMesh.triangles = triangles.ToList();
         newMesh.uv = uvs.ToList();
-        newMesh.disconnectedVertices = newDisconnectedVertices;
+        newMesh.disconnectedVertices = disconnectedVertices;
         return newMesh;
     }
 

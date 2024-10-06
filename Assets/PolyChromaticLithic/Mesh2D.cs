@@ -9,8 +9,13 @@ public class Mesh2D
     // 頂点座標
     public List<Vector2> vertices { get; set; }
 
-    //切断面の頂点のマージを防ぐため、切断部分を保管し対象外にする
-    public HashSet<int> disconnectedVertices { get; set; }
+    // 切断面の頂点のマージを防ぐため、切断部分を保管し対象外にする
+    public HashSet<Vector2> disconnectedVertices { get; set; }
+
+    // Keyは接合しない頂点の座標、接合しない頂点の*次の頂点*をNormalizedしたベクトル
+    public Dictionary<Vector2,Vector2> blackLists { get; set; }
+
+    // blackListsの計算負荷を削減するため、くっつい
 
     // 三角形（インデックスのリスト）
     public List<int> triangles { get; set; }
@@ -24,7 +29,7 @@ public class Mesh2D
         vertices = new List<Vector2>();
         triangles = new List<int>();
         uv = new List<Vector2>();
-        disconnectedVertices = new HashSet<int>();
+        disconnectedVertices = new HashSet<Vector2>();
     }
 
     // 頂点の追加
@@ -90,7 +95,8 @@ public class Mesh2D
         for (int i = 0; i < vertices.Count; i++)
         {
             meshVertices[i] = new Vector3(vertices[i].x, vertices[i].y, 0);
-            colors[i] = disconnectedVertices.Contains(i) ? Color.red : Color.white;
+            //colors[i] = disconnectedVertices.Contains(vertices[i]) ? Color.red : Color.white;
+            colors[i] = GetRandomColor();
         }
         Debug.Log(String.Join(' ', disconnectedVertices));
 
@@ -122,7 +128,7 @@ public class Mesh2D
             if (replacedIndexes.Contains(i)) continue;
             for (int j = i + 1; j < vertices.Count; j++)
             {
-                if (!disconnectedVertices.Contains(i) && !disconnectedVertices.Contains(j) && vertices[i] == vertices[j])
+                if (!disconnectedVertices.Contains(vertices[i]) && !disconnectedVertices.Contains(vertices[j]) && vertices[i] == vertices[j])
                 {
                     vertexIndexMap[j] = i;
                     replacedIndexes.Add(j);
@@ -154,22 +160,38 @@ public class Mesh2D
                     triangles[j]--;
                 }
             }
-            var disconnectedVerticesTmp = disconnectedVertices.ToList();
-            for (int j = 0; j < disconnectedVerticesTmp.Count; j++)
-            {
-                if (disconnectedVerticesTmp[j] > replacedIndexes[i])
-                {
-                    disconnectedVertices.Remove(disconnectedVerticesTmp[j]);
-                    disconnectedVertices.Add(disconnectedVerticesTmp[j] - 1);
-                }
-            }
-
+            
         }
 
         return this;
     }
 
-    static Mesh2D ToMesh2D(Mesh mesh)
+    public Mesh2D ReverseFaces()
+    {
+        for (int i = 0; i < triangles.Count; i += 3)
+        {
+            (triangles[i + 1], triangles[i]) = (triangles[i], triangles[i + 1]);
+        }
+        return this;
+    }
+
+    public Mesh2D NormalizeSize()
+    {
+        float minX = vertices.Min(v => v.x);
+        float minY = vertices.Min(v => v.y);
+        float maxX = vertices.Max(v => v.x);
+        float maxY = vertices.Max(v => v.y);
+        float width = maxX - minX;
+        float height = maxY - minY;
+        float scale = 10.0f / Mathf.Max(width, height);
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            vertices[i] = new Vector2((vertices[i].x - minX) * scale, (vertices[i].y - minY) * scale);
+        }
+        return this;
+    }
+
+    static public Mesh2D ToMesh2D(Mesh mesh)
     {
         Mesh2D mesh2D = new Mesh2D();
         Vector3[] meshVertices = mesh.vertices;
