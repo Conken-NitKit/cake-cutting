@@ -91,3 +91,4 @@ GitHubでリポジトリを見るとPull requestsのボタンが出てくるの�
 ```
 git pull origin [ブランチ名]
 ```
+多くの場合developをpullするとよい
