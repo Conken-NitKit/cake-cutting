@@ -37,6 +37,7 @@ public class Cutter : MonoBehaviour
             Vector3 pointB = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             pointB = new Vector3(pointB.x, pointB.y, 0);
             EndPoint.transform.position = pointB;
+            LineRenderer.positionCount = 0;
 
 
 
@@ -62,6 +63,8 @@ public class Cutter : MonoBehaviour
             {
                 cuttable.Cut(pointA, pointB);
             }
+
+
 
             
         }

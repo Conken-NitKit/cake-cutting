@@ -24,10 +24,11 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-        var a = new Vector2(1f,1f);
-        var b = new Vector2(BitIncrement(1f),BitIncrement(1f));
-        Debug.Log(a.x == b.x);
-        Debug.Log(a == b);
+              //var a = new Vector2(1f,1f);
+        //var b = new Vector2(BitIncrement(1f),BitIncrement(1f));
+        //Debug.Log(a.x == b.x);
+        //Debug.Log(a == b);
+
         //
         //Debug.Log(BitIncrement(1f) == 1f);
 

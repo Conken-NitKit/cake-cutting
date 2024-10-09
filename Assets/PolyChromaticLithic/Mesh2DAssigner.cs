@@ -5,13 +5,12 @@ using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
+[RequireComponent(typeof(MeshCollider))]
 [DisallowMultipleComponent]
 public class Mesh2DAssigner : MonoBehaviour
 {
     private MeshFilter meshFilter;
-    private MeshRenderer meshRenderer;
-    //private PolygonCollider2D polygonCollider;
-    
+    private MeshCollider meshCollider;
     
     private Mesh2D mesh2d;
     public Mesh2D Mesh2D
@@ -28,21 +27,15 @@ public class Mesh2DAssigner : MonoBehaviour
         {
             mesh2d = value;
             meshFilter.mesh = mesh2d.ToMesh();
+            meshCollider.sharedMesh = meshFilter.mesh;
             Debug.Log($"{mesh2d.vertices.Count} vertices, {mesh2d.triangles.Count / 3} triangles");
-            //ColliderCreator.SetCollider(mesh2d.ToMesh(), polygonCollider);
+            Debug.Log($"Size: {mesh2d.CalcurateArea()}");
         }
     }
     
     void Awake()
     {
         meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
-        //polygonCollider = GetComponent<PolygonCollider2D>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        meshCollider = GetComponent<MeshCollider>();
     }
 }
