@@ -16,7 +16,7 @@ public class MeshSeparator
         Vector2[] vertices = mesh2d.vertices.ToArray();
         int[] triangles = mesh2d.triangles.ToArray();
         Vector2[] uvs = mesh2d.uv.ToArray();
-        HashSet<Vector2> disconnectedVertices = mesh2d.disconnectedVertices;
+        Color[] colors = mesh2d.colors.ToArray();
 
         // 各頂点について処理を行う
         for (int i = 0; i < vertices.Length; i++)
@@ -28,7 +28,7 @@ public class MeshSeparator
                 //List<int> connectedTriangles = new List<int>();
                 HashSet<Triangle> connectedTriangles = new HashSet<Triangle>();
 
-                FindConnectedVertices(i, vertices, triangles, disconnectedVertices , visited, connectedVertices, connectedTriangles);
+                FindConnectedVertices(i, vertices, triangles, visited, connectedVertices, connectedTriangles);
 
                 if (connectedVertices.Count < 3)
                 {
@@ -37,7 +37,7 @@ public class MeshSeparator
 
                 int[] trianglesTmp = connectedTriangles.SelectMany(t => new int[]{ t.v1, t.v2, t.v3 }).ToArray();
                 // 新しいメッシュを作成
-                Mesh2D newMesh = CreateMesh(vertices, trianglesTmp, uvs, disconnectedVertices);
+                Mesh2D newMesh = CreateMesh(vertices, trianglesTmp, uvs, colors);
                 separatedMeshes.Add(newMesh);
             }
         }
@@ -58,7 +58,7 @@ public class MeshSeparator
         return separatedMeshes.ToArray();
     }
 
-    static private void FindConnectedVertices(int startIndex, Vector2[] vertices, int[] triangles, HashSet<Vector2> disconnectedVertices, HashSet<int> visited, List<int> connectedVertices, HashSet<Triangle> connectedTriangles)
+    static private void FindConnectedVertices(int startIndex, Vector2[] vertices, int[] triangles, HashSet<int> visited, List<int> connectedVertices, HashSet<Triangle> connectedTriangles)
     {
         Stack<int> stack = new Stack<int>();
         stack.Push(startIndex);
@@ -92,13 +92,13 @@ public class MeshSeparator
         }
     }
 
-    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles, Vector2[] uvs, HashSet<Vector2> disconnectedVertices)
+    static private Mesh2D CreateMesh(Vector2[] vertices, int[] triangles, Vector2[] uvs, Color[] colors)
     {
         Mesh2D newMesh = new Mesh2D();
         newMesh.vertices = vertices.ToList();
         newMesh.triangles = triangles.ToList();
         newMesh.uv = uvs.ToList();
-        newMesh.disconnectedVertices = disconnectedVertices;
+        newMesh.colors = colors.ToList();
         return newMesh;
     }
 

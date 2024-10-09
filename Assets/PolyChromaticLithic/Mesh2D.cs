@@ -1,21 +1,14 @@
-using UnityEngine;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using System.Linq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
+using UnityEngine;
 
 public class Mesh2D
 {
+
     // 頂点座標
     public List<Vector2> vertices { get; set; }
-
-    // 切断面の頂点のマージを防ぐため、切断部分を保管し対象外にする
-    public HashSet<Vector2> disconnectedVertices { get; set; }
-
-    // Keyは接合しない頂点の座標、接合しない頂点の*次の頂点*をNormalizedしたベクトル
-    public Dictionary<Vector2,Vector2> blackLists { get; set; }
-
-    // blackListsの計算負荷を削減するため、くっつい
 
     // 三角形（インデックスのリスト）
     public List<int> triangles { get; set; }
@@ -23,13 +16,15 @@ public class Mesh2D
     // UV座標
     public List<Vector2> uv { get; set; }
 
+    public List<Color> colors { get; set; }
+
     // コンストラクタ
     public Mesh2D()
     {
         vertices = new List<Vector2>();
         triangles = new List<int>();
         uv = new List<Vector2>();
-        disconnectedVertices = new HashSet<Vector2>();
+        colors = new List<Color>();
     }
 
     // 頂点の追加
@@ -52,17 +47,24 @@ public class Mesh2D
         uv.Add(uvCoordinate);
     }
 
+    // 色の追加
+    public void AddColor(Color color)
+    {
+        colors.Add(color);
+    }
+
     // メッシュのリセット
     public void Clear()
     {
         vertices.Clear();
         triangles.Clear();
         uv.Clear();
+        colors.Clear();
     }
 
     // メッシュの作成が完了したかどうかをチェック
     public bool IsValid() => vertices.Count >= 3 && triangles.Count >= 3;
-    
+
     // メッシュのデバッグ用の表示
     public void PrintDebugInfo()
     {
@@ -91,27 +93,18 @@ public class Mesh2D
         Mesh mesh = new Mesh();
 
         Vector3[] meshVertices = new Vector3[vertices.Count];
-        Color[] colors = new Color[vertices.Count];
         for (int i = 0; i < vertices.Count; i++)
         {
             meshVertices[i] = new Vector3(vertices[i].x, vertices[i].y, 0);
-            //colors[i] = disconnectedVertices.Contains(vertices[i]) ? Color.red : Color.white;
-            colors[i] = GetRandomColor();
         }
-        Debug.Log(String.Join(' ', disconnectedVertices));
 
         mesh.vertices = meshVertices;
         mesh.triangles = triangles.ToArray();
         mesh.uv = uv.ToArray();
-        mesh.colors = colors;
+        mesh.colors = colors.ToArray();
         mesh.RecalculateNormals();
 
         return mesh;
-
-        Color GetRandomColor()
-        {
-            return new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
-        }
     }
 
     public Mesh2D MergeDuplicateVertices()
@@ -128,7 +121,7 @@ public class Mesh2D
             if (replacedIndexes.Contains(i)) continue;
             for (int j = i + 1; j < vertices.Count; j++)
             {
-                if (!disconnectedVertices.Contains(vertices[i]) && !disconnectedVertices.Contains(vertices[j]) && vertices[i] == vertices[j])
+                if (vertices[i] == vertices[j])
                 {
                     vertexIndexMap[j] = i;
                     replacedIndexes.Add(j);
@@ -147,10 +140,11 @@ public class Mesh2D
         replacedIndexes.Sort();
         replacedIndexes = replacedIndexes.Distinct().ToList();
         //使用されなくなった頂点を削除する
-        for(int i = 0; i < replacedIndexes.Count; i++)
+        for (int i = 0; i < replacedIndexes.Count; i++)
         {
             vertices.RemoveAt(replacedIndexes[i]);
             uv.RemoveAt(replacedIndexes[i]);
+            colors.RemoveAt(replacedIndexes[i]);
 
             //削除した頂点より後ろの頂点のインデックスを調整
             for (int j = 0; j < triangles.Count; j++)
@@ -160,19 +154,20 @@ public class Mesh2D
                     triangles[j]--;
                 }
             }
-            
+
         }
 
         return this;
     }
 
-    public Mesh2D ReverseFaces()
+    public static void ReverseFaces(Mesh mesh)
     {
-        for (int i = 0; i < triangles.Count; i += 3)
+        for (int i = 0; i < mesh.triangles.Count(); i += 3)
         {
-            (triangles[i + 1], triangles[i]) = (triangles[i], triangles[i + 1]);
+            (mesh.triangles[i + 1], mesh.triangles[i]) = (mesh.triangles[i], mesh.triangles[i + 1]);
         }
-        return this;
+        //mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
     }
 
     public Mesh2D NormalizeSize()
@@ -191,7 +186,36 @@ public class Mesh2D
         return this;
     }
 
-    static public Mesh2D ToMesh2D(Mesh mesh)
+    public float CalcurateArea()
+    {
+        float area = 0;
+        for (int i = 0; i < triangles.Count; i += 3)
+        {
+            Vector2 a = vertices[triangles[i]];
+            Vector2 b = vertices[triangles[i + 1]];
+            Vector2 c = vertices[triangles[i + 2]];
+            area += Mathf.Abs((a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - b.x * a.y - c.x * b.y) / 2);
+        }
+        return area;
+    }
+
+    public Vector2 CalcurateCentroid()
+    {
+        float area = CalcurateArea();
+        float x = 0;
+        float y = 0;
+        for (int i = 0; i < triangles.Count; i += 3)
+        {
+            Vector2 a = vertices[triangles[i]];
+            Vector2 b = vertices[triangles[i + 1]];
+            Vector2 c = vertices[triangles[i + 2]];
+            x += (a.x + b.x + c.x) * (a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - b.x * a.y - c.x * b.y) / 6;
+            y += (a.y + b.y + c.y) * (a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - b.x * a.y - c.x * b.y) / 6;
+        }
+        return new Vector2(x / area, y / area);
+    }
+
+    public static Mesh2D ToMesh2D(Mesh mesh)
     {
         Mesh2D mesh2D = new Mesh2D();
         Vector3[] meshVertices = mesh.vertices;
@@ -209,11 +233,27 @@ public class Mesh2D
         {
             mesh2D.AddUV(meshUVs[i]);
         }
-        if(!mesh2D.IsValid())
+        Color[] meshColors = mesh.colors;
+        if (meshColors.Length < meshVertices.Length)
+        {
+            for (int i = 0; i < meshVertices.Length - meshColors.Length; i++)
+            {
+                mesh2D.AddColor(Color.white);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < meshColors.Length; i++)
+            {
+                mesh2D.AddColor(meshColors[i]);
+            }
+        }
+        if (!mesh2D.IsValid())
         {
             Debug.LogError("Invalid mesh2D");
         }
         return mesh2D;
     }
+
 }
 
