@@ -119,7 +119,7 @@ public class PolygonCutter
         private Vector2 endPoint;
         private Vector2 direction;
         private Vector2 moveDirection;
-        private float moveAmount = 0.01f;
+        private float moveAmount = 0.02f;
 
 
 
@@ -307,15 +307,12 @@ public class PolygonCutter
             var index3 = victim.triangles[triangleCount + 2];
             if (SegmentCutTriangle(index1, index2, index3, startPoint, endPoint)) isConnecting = true;
         }
-        Debug.Log("cwSide0:" + string.Join(",", cwSide.vertices));
         if (isConnecting)
         {
             cwSide.Combine(acwSide);
         }
-        Debug.Log("cwSide:" + string.Join(",", cwSide.vertices));
         cwSide.MergeDuplicateVertices();
         cwSide.DeleteReverceTriangle();
-        Debug.Log("cwSide2:" + string.Join(",", cwSide.vertices));
         acwSide.MergeDuplicateVertices();
         acwSide.DeleteReverceTriangle();
         var cwMesh = cwSide.ToMesh2D();

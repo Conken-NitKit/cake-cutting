@@ -8,6 +8,17 @@ using System;
 
 public class Test : MonoBehaviour
 {
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            ResultData resultData = new ResultData(1, 1f, Plate.GetSizes(), 1f, 1);
+            Debug.Log(resultData.ToString());
+        }
+    }
+
+
+
     // 関数: ランダムなスケールを適用したベクトルを返す
     public Vector2[] GetRandomScaledVectors(Vector2 originalVector, int n, float minScale, float maxScale)
     {
@@ -24,7 +35,10 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-              //var a = new Vector2(1f,1f);
+        
+
+        
+        //var a = new Vector2(1f,1f);
         //var b = new Vector2(BitIncrement(1f),BitIncrement(1f));
         //Debug.Log(a.x == b.x);
         //Debug.Log(a == b);

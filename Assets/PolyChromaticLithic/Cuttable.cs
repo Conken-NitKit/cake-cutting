@@ -28,6 +28,7 @@ public class Cuttable : MonoBehaviour
             go.GetComponent<Mesh2DAssigner>().Mesh2D = cutMesh;
             go.GetComponent<MeshRenderer>().material = this.GetComponent<MeshRenderer>().material;
             go.GetComponent<Cake>().center = cutMesh.CalcurateCentroid();
+            go.transform.parent = CuttingBoard.CuttingBoardGameObject.transform;
             Cake.AddCake(go.GetComponent<Cake>());
             //ColliderCreator.SetCollider(cutMesh.ToMesh(), go.GetComponent<PolygonCollider2D>());
         }
