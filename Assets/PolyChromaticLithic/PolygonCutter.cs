@@ -1,9 +1,9 @@
+using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class PolygonCutter
 {
@@ -12,54 +12,15 @@ public class PolygonCutter
         public List<(Vector2 position, int layer)> vertices = new();
         public List<int> triangles = new();
         public List<Vector2> uvs = new();
-        public HashSet<Vector2> disconnecteds = new();
-
+        public List<Color> colors = new();
         public void ClearAll()
         {
             vertices.Clear();
             triangles.Clear();
             uvs.Clear();
-            disconnecteds.Clear();
+            colors.Clear();
         }
 
-        //元の頂点を参照して三角形を追加
-        //public void AddTriangle(int index1, int index2, int index3, int layer, bool forceClockWise = true)
-        //{
-        //    var nowIndex = vertices.Count;
-        //    if (forceClockWise)
-        //    {
-        //        if (IsClockWise(victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]))
-        //        {
-        //            (index3, index2) = (index2, index3);
-        //            triangles.Add(nowIndex + 0);
-        //            triangles.Add(nowIndex + 2);
-        //            triangles.Add(nowIndex + 1);
-
-        //        }
-        //        else
-        //        {
-        //            triangles.Add(nowIndex + 0);
-        //            triangles.Add(nowIndex + 1);
-        //            triangles.Add(nowIndex + 2);
-
-        //        }
-        //    }
-        //    else
-        //    {
-        //        triangles.Add(nowIndex + 2);
-        //        triangles.Add(nowIndex + 1);
-        //        triangles.Add(nowIndex + 0);
-        //    }
-
-        //    vertices.Add((victimMesh.vertices[index1], layer));
-        //    vertices.Add((victimMesh.vertices[index2], layer));
-        //    vertices.Add((victimMesh.vertices[index3], layer));
-
-        //    uvs.Add(victimMesh.uv[index1]);
-        //    uvs.Add(victimMesh.uv[index2]);
-        //    uvs.Add(victimMesh.uv[index3]);
-
-        //}
 
         public void AddTriangle(int index1, int index2, int index3, int layer1, int layer2, int layer3, bool forceClockWise = true)
         {
@@ -90,19 +51,32 @@ public class PolygonCutter
                 triangles.Add(nowIndex + 0);
             }
 
-            vertices.Add((OffsetVector(victimMesh.vertices[index1], layer1), disconnecteds.Contains(victimMesh.vertices[index1]) ? -4 : layer1));
-            vertices.Add((OffsetVector(victimMesh.vertices[index2], layer2), disconnecteds.Contains(victimMesh.vertices[index2]) ? -4 : layer2));
-            vertices.Add((OffsetVector(victimMesh.vertices[index3], layer3), disconnecteds.Contains(victimMesh.vertices[index3]) ? -4 : layer3));
+            vertices.Add((OffsetVector(victimMesh.vertices[index1], layer1), layer1));
+            vertices.Add((OffsetVector(victimMesh.vertices[index2], layer2), layer2));
+            vertices.Add((OffsetVector(victimMesh.vertices[index3], layer3), layer3));
 
 
             uvs.Add(victimMesh.uv[index1]);
             uvs.Add(victimMesh.uv[index2]);
             uvs.Add(victimMesh.uv[index3]);
 
+            if (victimMesh.colors.Count <= index1)
+            {
+                colors.Add(Color.white);
+                colors.Add(Color.white);
+                colors.Add(Color.white);
+            }
+            else
+            {
+                colors.Add(victimMesh.colors[index1]);
+                colors.Add(victimMesh.colors[index2]);
+                colors.Add(victimMesh.colors[index3]);
+            }
+
         }
 
 
-        public void AddTriangle(Vector2 point1, Vector2 point2, Vector2 point3, Vector2 uv1, Vector2 uv2, Vector2 uv3, int layer1, int layer2, int layer3, bool forceClockWise = true)
+        public void AddTriangle(Vector2 point1, Vector2 point2, Vector2 point3, Vector2 uv1, Vector2 uv2, Vector2 uv3, Color color1, Color color2, Color color3, int layer1, int layer2, int layer3, bool forceClockWise = true)
         {
 
             var nowIndex = vertices.Count;
@@ -111,6 +85,7 @@ public class PolygonCutter
                 (point3, point2) = (point2, point3);
                 (uv3, uv2) = (uv2, uv3);
                 (layer3, layer2) = (layer2, layer3);
+                (color3, color2) = (color2, color3);
 
                 triangles.Add(nowIndex + 2);
                 triangles.Add(nowIndex + 0);
@@ -134,52 +109,90 @@ public class PolygonCutter
             uvs.Add(uv2);
             uvs.Add(uv3);
 
+            colors.Add(color1);
+            colors.Add(color2);
+            colors.Add(color3);
         }
 
         private bool isIn45_135;
+        private Vector2 startPoint;
+        private Vector2 endPoint;
+        private Vector2 direction;
+        private Vector2 moveDirection;
+        private float moveAmount = 0.02f;
+
+
 
         public void SetStartPointAndEndPoint(Vector2 startPoint, Vector2 endPoint)
         {
+            this.startPoint = startPoint;
+            this.endPoint = endPoint;
             isIn45_135 = IsClockWise(new Vector2(0, 0), new Vector2(1, 1), endPoint - startPoint);
-        }
-
-        public void AddDisconnectedPoint(Vector2 point, int layer)
-        {
-
+            direction = (endPoint - startPoint).normalized;
+            moveDirection = new Vector2(-direction.y, direction.x);
         }
 
         private Vector2 OffsetVector(Vector2 point, int layer)
         {
             var ans = point;
-            if (layer == -1) return ans;
-            if (isIn45_135)
+            if (layer == -1 || layer == -2) return ans;
+            if (layer == 0)
             {
-                if (layer == 0)
-                {
-                    ans = new Vector2(BitIncrement(ans.x), BitIncrement(ans.y));
-                    //ans += new Vector2(0.1f, 0.1f);
-                }
-                else
-                {
-                    ans = new Vector2(BitDecrement(ans.x), BitDecrement(ans.y));
-                   // ans -= new Vector2(0.1f, 0.1f);
-                }
+                ans += moveDirection * moveAmount;
             }
             else
             {
-                if (layer == 0)
-                {
-                    ans = new Vector2(BitDecrement(ans.x), BitDecrement(ans.y));
-                   // ans -= new Vector2(0.1f, 0.1f);
-                }
-                else
-                {
-                    ans = new Vector2(BitIncrement(ans.x), BitIncrement(ans.y));
-                   // ans += new Vector2(0.1f, 0.1f);
-                }
+                ans -= moveDirection * moveAmount;
             }
+            //if (isIn45_135)
+            //{
+            //    if (layer == 0)
+            //    {
+            //        ans = new Vector2(BitIncrement(ans.x), BitIncrement(ans.y));
+            //        ans += moveDirection * moveAmount;
+            //    }
+            //    else
+            //    {
+            //        ans = new Vector2(BitDecrement(ans.x), BitDecrement(ans.y));
+            //         ans -= moveDirection * moveAmount;
+            //    }
+            //}
+            //else
+            //{
+            //    if (layer == 0)
+            //    {
+            //        ans = new Vector2(BitDecrement(ans.x), BitDecrement(ans.y));
+            //        ans -= moveDirection * moveAmount;
+            //    }
+            //    else
+            //    {
+            //        ans = new Vector2(BitIncrement(ans.x), BitIncrement(ans.y));
+            //        ans += moveDirection * moveAmount;
+            //    }
+            //}
             return ans;
 
+        }
+
+        public void DeleteReverceTriangle()
+        {
+            var deleteIndex = new List<int>();
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                var index1 = triangles[i];
+                var index2 = triangles[i + 1];
+                var index3 = triangles[i + 2];
+                if (IsClockWise(vertices[index1].position, vertices[index2].position, vertices[index3].position))
+                {
+                    deleteIndex.Add(i);
+                    deleteIndex.Add(i + 1);
+                    deleteIndex.Add(i + 2);
+                }
+            }
+            for (int i = deleteIndex.Count - 1; i >= 0; i--)
+            {
+                triangles.RemoveAt(deleteIndex[i]);
+            }
         }
 
         public Mesh2D ToMesh2D()
@@ -188,7 +201,7 @@ public class PolygonCutter
             mesh.vertices = vertices.Select(x => x.position).ToList();
             mesh.triangles = triangles;
             mesh.uv = uvs;
-            mesh.disconnectedVertices = new(disconnecteds);
+            mesh.colors = colors;
             return mesh;
         }
 
@@ -201,20 +214,11 @@ public class PolygonCutter
                 triangles.Add(triangle + nowIndex);
             }
             uvs.AddRange(meshCutSide.uvs);
-            foreach (var disconnected in meshCutSide.disconnecteds)
-            {
-                disconnecteds.Add(disconnected);
-            }
+            colors.AddRange(meshCutSide.colors);
         }
 
-        public void MergeDuplicateVertices(HashSet<Vector2> disconnecteds)
+        public void MergeDuplicateVertices()
         {
-            //同じレイヤーで同じ位置の頂点をマージする
-            //-1は-4以外の任意のレイヤーとマージできる
-            //-4は一切マージされない
-            //このマジックナンバーの実装は最悪なのでいつかどうにかしたい
-
-            //全ての頂点に対して置換先の頂点を持つDictionaryを作る
             Dictionary<int, int> vertexIndexMap = new();
             Dictionary<int, int> layerMap = new();
             List<int> replacedIndexes = new();
@@ -224,8 +228,7 @@ public class PolygonCutter
                 if (replacedIndexes.Contains(i)) continue;
                 for (int j = i + 1; j < vertices.Count; j++)
                 {
-                    //if (vertices[i].layer == -4 || vertices[j].layer == -4) continue;
-                    if (vertices[i].position.Equals(vertices[j].position) /* && (vertices[i].layer == -1 || vertices[j].layer == -1 || vertices[i].layer == vertices[j].layer)*/)
+                    if (vertices[i].position.Equals(vertices[j].position))
                     {
                         vertexIndexMap[j] = i;
                         int layer = -1;
@@ -254,6 +257,7 @@ public class PolygonCutter
             {
                 vertices.RemoveAt(replacedIndexes[i]);
                 uvs.RemoveAt(replacedIndexes[i]);
+                colors.RemoveAt(replacedIndexes[i]);
 
 
                 //削除した頂点より後ろの頂点のインデックスを調整
@@ -285,7 +289,7 @@ public class PolygonCutter
     private static MeshCutSide cwSide;
     private static MeshCutSide acwSide;
 
-     public static Mesh2D[] SegmentCut(Mesh2D victim, Vector2 startPoint, Vector2 endPoint)
+    public static Mesh2D[] SegmentCut(Mesh2D victim, Vector2 startPoint, Vector2 endPoint)
     {
         victimMesh = victim;
         //切断する直線に対し時計回り(clockwise)側と反時計回り(anti-clockwise)側に分ける
@@ -293,8 +297,6 @@ public class PolygonCutter
         cwSide.SetStartPointAndEndPoint(startPoint, endPoint);
         acwSide = new MeshCutSide();
         acwSide.SetStartPointAndEndPoint(startPoint, endPoint);
-        cwSide.disconnecteds = victimMesh.disconnectedVertices;
-        acwSide.disconnecteds = victimMesh.disconnectedVertices;
 
         bool isConnecting = false;
         //三角形を振り分ける
@@ -305,15 +307,14 @@ public class PolygonCutter
             var index3 = victim.triangles[triangleCount + 2];
             if (SegmentCutTriangle(index1, index2, index3, startPoint, endPoint)) isConnecting = true;
         }
-        Debug.Log("cwSide0:" + string.Join(",", cwSide.vertices));
         if (isConnecting)
         {
             cwSide.Combine(acwSide);
         }
-        Debug.Log("cwSide:" + string.Join(",", cwSide.vertices));
-        cwSide.MergeDuplicateVertices(victimMesh.disconnectedVertices);
-        Debug.Log("cwSide2:" + string.Join(",", cwSide.vertices));
-        acwSide.MergeDuplicateVertices(victimMesh.disconnectedVertices);
+        cwSide.MergeDuplicateVertices();
+        cwSide.DeleteReverceTriangle();
+        acwSide.MergeDuplicateVertices();
+        acwSide.DeleteReverceTriangle();
         var cwMesh = cwSide.ToMesh2D();
         var acwMesh = acwSide.ToMesh2D();
         if (isConnecting)
@@ -329,7 +330,7 @@ public class PolygonCutter
 
     }
 
- 
+
 
     /// <summary>
     /// 切断面がくっついている場合、Trueを返します
@@ -347,11 +348,6 @@ public class PolygonCutter
         var isClockWise1 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index1]);
         var isClockWise2 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index2]);
         var isClockWise3 = IsClockWise(startPoint, endPoint, victimMesh.vertices[index3]);
-
-        var isDisconnected1 = victimMesh.disconnectedVertices.Contains(victimMesh.vertices[index1]);
-        var isDisconnected2 = victimMesh.disconnectedVertices.Contains(victimMesh.vertices[index2]);
-        var isDisconnected3 = victimMesh.disconnectedVertices.Contains(victimMesh.vertices[index3]);
-
         //三角形のすべての頂点が一方の側にある場合はカットせず直接追加する
         if (isClockWise1 == isClockWise2 && isClockWise2 == isClockWise3)
         {
@@ -371,26 +367,32 @@ public class PolygonCutter
         Vector2[] cwExistingUvs = new Vector2[3];
         Vector2[] cwNewPoints = new Vector2[2];
         Vector2[] cwNewUvs = new Vector2[2];
+        Color[] cwExistingColors = new Color[3];
 
         Vector2[] acwExistingPoints = new Vector2[3];
         Vector2[] acwExistingUvs = new Vector2[3];
         Vector2[] acwNewPoints = new Vector2[2];
         Vector2[] acwNewUvs = new Vector2[2];
+        Color[] acwExistingColors = new Color[3];
 
 
         bool triangleIsCwSide = false;
         bool IsTriangleOnCutEdge = false;
+
+        if (victimMesh.colors.Count < victimMesh.vertices.Count)
+        {
+            victimMesh.colors = new List<Color>(victimMesh.vertices.Count);
+            for (int i = 0; i < victimMesh.vertices.Count; i++)
+            {
+                victimMesh.colors.Add(Color.white);
+            }
+        }
 
         //カットの端であることを検出
 
         var isLineIntersectingCutter1_2 = HasIntersection(victimMesh.vertices[index1], victimMesh.vertices[index2], startPoint, endPoint);
         var isLineIntersectingCutter2_3 = HasIntersection(victimMesh.vertices[index2], victimMesh.vertices[index3], startPoint, endPoint);
         var isLineIntersectingCutter3_1 = HasIntersection(victimMesh.vertices[index3], victimMesh.vertices[index1], startPoint, endPoint);
-
-        var IsLineIntersectingDisconnected1_2 = isDisconnected1 && isDisconnected2;
-        var IsLineIntersectingDisconnected2_3 = isDisconnected2 && isDisconnected3;
-        var IsLineIntersectingDisconnected3_1 = isDisconnected3 && isDisconnected1;
-
 
         var isCutOrderForward = true;
 
@@ -462,6 +464,10 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index1];
                 cwExistingUvs[1] = victimMesh.uv[index2];
                 cwExistingUvs[2] = victimMesh.uv[index3];
+
+                cwExistingColors[0] = victimMesh.colors[index1];
+                cwExistingColors[1] = victimMesh.colors[index2];
+                cwExistingColors[2] = victimMesh.colors[index3];
             }
             else if (isLineIntersectingCutter2_3)
             {
@@ -474,6 +480,10 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index2];
                 cwExistingUvs[1] = victimMesh.uv[index3];
                 cwExistingUvs[2] = victimMesh.uv[index1];
+
+                cwExistingColors[0] = victimMesh.colors[index2];
+                cwExistingColors[1] = victimMesh.colors[index3];
+                cwExistingColors[2] = victimMesh.colors[index1];
             }
             else
             {
@@ -486,6 +496,10 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index3];
                 cwExistingUvs[1] = victimMesh.uv[index1];
                 cwExistingUvs[2] = victimMesh.uv[index2];
+
+                cwExistingColors[0] = victimMesh.colors[index3];
+                cwExistingColors[1] = victimMesh.colors[index1];
+                cwExistingColors[2] = victimMesh.colors[index2];
             }
 
             isCutOrderForward = PointInTriangle(startPoint, victimMesh.vertices[index1], victimMesh.vertices[index2], victimMesh.vertices[index3]);
@@ -508,6 +522,10 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index1];
                 acwExistingUvs[0] = victimMesh.uv[index2];
                 acwExistingUvs[1] = victimMesh.uv[index3];
+
+                cwExistingColors[0] = victimMesh.colors[index1];
+                acwExistingColors[0] = victimMesh.colors[index2];
+                acwExistingColors[1] = victimMesh.colors[index3];
             }
             else
             {
@@ -520,6 +538,10 @@ public class PolygonCutter
                 acwExistingUvs[0] = victimMesh.uv[index1];
                 cwExistingUvs[0] = victimMesh.uv[index2];
                 cwExistingUvs[1] = victimMesh.uv[index3];
+
+                acwExistingColors[0] = victimMesh.colors[index1];
+                cwExistingColors[0] = victimMesh.colors[index2];
+                cwExistingColors[1] = victimMesh.colors[index3];
             }
 
 
@@ -547,6 +569,9 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index2];
                 acwExistingUvs[0] = victimMesh.uv[index3];
                 acwExistingUvs[1] = victimMesh.uv[index1];
+                cwExistingColors[0] = victimMesh.colors[index2];
+                acwExistingColors[0] = victimMesh.colors[index3];
+                acwExistingColors[1] = victimMesh.colors[index1];
             }
             else
             {
@@ -557,6 +582,9 @@ public class PolygonCutter
                 acwExistingUvs[0] = victimMesh.uv[index2];
                 cwExistingUvs[0] = victimMesh.uv[index3];
                 cwExistingUvs[1] = victimMesh.uv[index1];
+                acwExistingColors[0] = victimMesh.colors[index2];
+                cwExistingColors[0] = victimMesh.colors[index3];
+                cwExistingColors[1] = victimMesh.colors[index1];
             }
 
             GetIntersection(victimMesh.vertices[index2], victimMesh.vertices[index3], startPoint, endPoint, ref cwNewPoints[0]);
@@ -581,6 +609,9 @@ public class PolygonCutter
                 cwExistingUvs[0] = victimMesh.uv[index3];
                 acwExistingUvs[0] = victimMesh.uv[index1];
                 acwExistingUvs[1] = victimMesh.uv[index2];
+                cwExistingColors[0] = victimMesh.colors[index3];
+                acwExistingColors[0] = victimMesh.colors[index1];
+                acwExistingColors[1] = victimMesh.colors[index2];
             }
             else
             {
@@ -591,6 +622,9 @@ public class PolygonCutter
                 acwExistingUvs[0] = victimMesh.uv[index3];
                 cwExistingUvs[0] = victimMesh.uv[index1];
                 cwExistingUvs[1] = victimMesh.uv[index2];
+                acwExistingColors[0] = victimMesh.colors[index3];
+                cwExistingColors[0] = victimMesh.colors[index1];
+                cwExistingColors[1] = victimMesh.colors[index2];
             }
 
             GetIntersection(victimMesh.vertices[index3], victimMesh.vertices[index1], startPoint, endPoint, ref cwNewPoints[0]);
@@ -617,39 +651,29 @@ public class PolygonCutter
 
             var isClockWiseExisting0 = isCutOrderForward ? IsClockWise(cwNewPoints[0], cwNewPoints[1], cwExistingPoints[0]) : IsClockWise(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0]);
             var isClockWiseExisting1 = isCutOrderForward ? IsClockWise(cwNewPoints[0], cwNewPoints[1], cwExistingPoints[1]) : IsClockWise(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[1]);
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[0], cwExistingPoints[2], cwNewUvs[1], cwExistingUvs[0], cwExistingUvs[2], -1, -1, -1);
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[2], cwExistingPoints[1], cwNewUvs[1], cwExistingUvs[2], cwExistingUvs[1], -1, -1, -1);
-            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[1], cwNewPoints[0], cwNewUvs[1], cwExistingUvs[1], cwNewUvs[0], -1, -1, isClockWiseExisting1 ? 0 : 1);
-            cwSide.AddTriangle(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0], cwNewUvs[1], cwNewUvs[0], cwExistingUvs[0], -1, isClockWiseExisting0 ? 0 : 1, -1);
-            cwSide.disconnecteds.Add(cwNewPoints[0]);
-            cwSide.disconnecteds.Add(cwNewPoints[1]);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[0], cwExistingPoints[2], cwNewUvs[1], cwExistingUvs[0], cwExistingUvs[2], Color.black, cwExistingColors[0], cwExistingColors[2], -2, -1, -1);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[2], cwExistingPoints[1], cwNewUvs[1], cwExistingUvs[2], cwExistingUvs[1], Color.black, cwExistingColors[2], cwExistingColors[1], -2, -1, -1);
+            cwSide.AddTriangle(cwNewPoints[1], cwExistingPoints[1], cwNewPoints[0], cwNewUvs[1], cwExistingUvs[1], cwNewUvs[0], Color.black, cwExistingColors[1], Color.black, -2, -1, isClockWiseExisting1 ? 0 : 1);
+            cwSide.AddTriangle(cwNewPoints[1], cwNewPoints[0], cwExistingPoints[0], cwNewUvs[1], cwNewUvs[0], cwExistingUvs[0], Color.black, Color.black, cwExistingColors[0], -2, isClockWiseExisting0 ? 0 : 1, -1);
             return true;
         }
         else if (triangleIsCwSide)
         {
             //時計回り側は三角形1個
-            cwSide.AddTriangle(cwExistingPoints[0], cwNewPoints[1], cwNewPoints[0], cwExistingUvs[0], cwNewUvs[1], cwNewUvs[0], -1, 1, 1);
-            cwSide.disconnecteds.Add(cwNewPoints[0]);
-            cwSide.disconnecteds.Add(cwNewPoints[1]);
+            cwSide.AddTriangle(cwExistingPoints[0], cwNewPoints[1], cwNewPoints[0], cwExistingUvs[0], cwNewUvs[1], cwNewUvs[0], cwExistingColors[0], Color.black, Color.black, -1, 1, 1);
 
             //反時計回り側は三角形2個
-            acwSide.AddTriangle(acwExistingPoints[1], acwExistingPoints[0], acwNewPoints[0], acwExistingUvs[1], acwExistingUvs[0], acwNewUvs[0], -1, -1, 0);
-            acwSide.AddTriangle(acwExistingPoints[1], acwNewPoints[0], acwNewPoints[1], acwExistingUvs[1], acwNewUvs[0], acwNewUvs[1], -1, 0, 0);
-            acwSide.disconnecteds.Add(acwNewPoints[0]);
-            acwSide.disconnecteds.Add(acwNewPoints[1]);
+            acwSide.AddTriangle(acwExistingPoints[1], acwExistingPoints[0], acwNewPoints[0], acwExistingUvs[1], acwExistingUvs[0], acwNewUvs[0], acwExistingColors[1], acwExistingColors[0], Color.black, -1, -1, 0);
+            acwSide.AddTriangle(acwExistingPoints[1], acwNewPoints[0], acwNewPoints[1], acwExistingUvs[1], acwNewUvs[0], acwNewUvs[1], acwExistingColors[1], Color.black, Color.black, -1, 0, 0);
         }
         else
         {
             //反時計回り側は三角形1個
-            acwSide.AddTriangle(acwExistingPoints[0], acwNewPoints[1], acwNewPoints[0], acwExistingUvs[0], acwNewUvs[1], acwNewUvs[0], -1, 0, 0);
-            acwSide.disconnecteds.Add(acwNewPoints[0]);
-            acwSide.disconnecteds.Add(acwNewPoints[1]);
+            acwSide.AddTriangle(acwExistingPoints[0], acwNewPoints[1], acwNewPoints[0], acwExistingUvs[0], acwNewUvs[1], acwNewUvs[0], acwExistingColors[0], Color.black, Color.black, -1, 0, 0);
 
             //時計回り側は三角形2個
-            cwSide.AddTriangle(cwExistingPoints[1], cwExistingPoints[0], cwNewPoints[0], cwExistingUvs[1], cwExistingUvs[0], cwNewUvs[0], -1, -1, 1);
-            cwSide.AddTriangle(cwExistingPoints[1], cwNewPoints[0], cwNewPoints[1], cwExistingUvs[1], cwNewUvs[0], cwNewUvs[1], -1, 1, 1);
-            cwSide.disconnecteds.Add(cwNewPoints[0]);
-            cwSide.disconnecteds.Add(cwNewPoints[1]);
+            cwSide.AddTriangle(cwExistingPoints[1], cwExistingPoints[0], cwNewPoints[0], cwExistingUvs[1], cwExistingUvs[0], cwNewUvs[0], cwExistingColors[1], cwExistingColors[0], Color.black, -1, -1, 1);
+            cwSide.AddTriangle(cwExistingPoints[1], cwNewPoints[0], cwNewPoints[1], cwExistingUvs[1], cwNewUvs[0], cwNewUvs[1], cwExistingColors[1], Color.black, Color.black, -1, 1, 1);
         }
 
         #endregion
