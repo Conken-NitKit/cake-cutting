@@ -31,12 +31,13 @@ public class SlidePlates : MonoBehaviour
         }
     }
 
-    private void Start()
+   
+    public void Setting(int count)
     {
+        this.count = count;
         Current = 0;
         x = transform.position.x;
         SetPlates();
-        SetTableCloth();
     }
 
     private void SetPlates()
@@ -48,13 +49,7 @@ public class SlidePlates : MonoBehaviour
         }
     }
 
-    private void SetTableCloth()
-    {
-        //‚¢‚ë‚¢‚ëŽŽ‚µ‚½Œ‹‰Ê‚Ì’l
-        tableCloth.transform.position = new Vector3(x, count * 3.4f, 0);
-        tableCloth.GetComponent<SpriteRenderer>().size = new Vector2(plateSize / 4.09f, (count - 1) * 1.833f + 2.5f);
-    }
-
+   
     private void Update()
     {
         if (isSliding) { return; }

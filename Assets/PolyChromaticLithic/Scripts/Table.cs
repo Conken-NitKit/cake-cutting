@@ -8,8 +8,6 @@ public class Table : MonoBehaviour
     
     void Start()
     {
-        transform.position = new Vector3(25, 0, 0);
-        CuttingBoard.CuttingBoardGameObject.transform.position = new Vector3(0, -3.2f, 0);
     }
 
     void Update()
@@ -22,7 +20,6 @@ public class Table : MonoBehaviour
 
     public void OpenTable()
     {
-        transform.DOMoveX(10, 0.2f);
-        CuttingBoard.CuttingBoardGameObject.transform.DOMoveX(-7, 0.2f);
+       
     }
 }

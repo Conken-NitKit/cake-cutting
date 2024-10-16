@@ -14,7 +14,8 @@ public class MeshGenerator : MonoBehaviour
 
     void Start()
     {
-        this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateCircleMesh().MergeDuplicateVertices().NormalizeSize();
+        //テスト用
+        //this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateCircleMesh().MergeDuplicateVertices().NormalizeSize();
     }
 
     Mesh2D CreateTriangleMesh()

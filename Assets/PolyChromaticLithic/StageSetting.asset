@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b04a1b5eb58e82341818c60f37b6866f, type: 3}
+  m_Name: StageSetting
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySetting
+  DataList:
+  - Id: 1
+    TargetCuttingCount: 4
+    MaxCuttingCount: 5
+    CakeShape: {fileID: -1119430988441025290, guid: ba1f5239fdc31ed45b8a6304dee4c9de, type: 3}
+    CakeOffset: {x: -3, y: -6}
+  - Id: 2
+    TargetCuttingCount: 5
+    MaxCuttingCount: 20
+    CakeShape: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+    CakeOffset: {x: 0, y: 0}
+  - Id: 3
+    TargetCuttingCount: 6
+    MaxCuttingCount: 40
+    CakeShape: {fileID: -1119430988441025290, guid: ba1f5239fdc31ed45b8a6304dee4c9de, type: 3}
+    CakeOffset: {x: 0, y: 0}

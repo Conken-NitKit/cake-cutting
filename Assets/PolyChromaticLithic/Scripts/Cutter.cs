@@ -23,6 +23,7 @@ public class Cutter : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        if (!CuttingFlowManager.Instance.ArrowCut) return;
         if (Input.GetMouseButtonDown(0))
         {
             isDrugging = true;
@@ -39,20 +40,6 @@ public class Cutter : MonoBehaviour
             EndPoint.transform.position = pointB;
             LineRenderer.positionCount = 0;
 
-
-
-            //Ray2D ray = new Ray2D(pointA, pointB - pointA);
-            //float distance = Vector3.Distance(pointA, pointB);
-
-            //RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction, distance);
-
-            //foreach (RaycastHit2D hit in hits)
-            //{
-            //    hit.collider.gameObject.TryGetComponent(out Cuttable cuttable);
-            //    if (cuttable == null) continue;
-            //    cuttable.Cut(pointA, pointB);
-            //}
-
             //Staticにしたせいで列挙中にも変更されるからコピーを列挙する
             var cuttables_copy = new List<Cuttable>(cuttables);
 
@@ -63,10 +50,6 @@ public class Cutter : MonoBehaviour
             {
                 cuttable.Cut(pointA, pointB);
             }
-
-
-
-            
         }
 
         if (isDrugging)

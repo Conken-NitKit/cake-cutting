@@ -51,7 +51,7 @@ public class Plate : MonoBehaviour
             {
                 cakes.Add(cake);
                 cake.transform.parent = transform;
-                mass += cake.GetMass();
+                mass += cake.Mass;
             }
             else
             {
