@@ -1,7 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 // •¡”‚ÌNormalized‚Å•‚“®¬”“_Œ^‚ÌŒë·‚ªŒ»‚ê‚é‚©‚Ì’²¸—p
 // “Á‚ÉŒë·‚Í‚È‚©‚Á‚½
@@ -10,12 +10,8 @@ public class Test : MonoBehaviour
 {
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            ResultData resultData = new ResultData(1, 1f, Plate.GetSizes(), 1f, 1);
-            Debug.Log(resultData.ToString());
-        }
     }
+
 
 
 
@@ -35,9 +31,9 @@ public class Test : MonoBehaviour
 
     private void Start()
     {
-        
 
-        
+
+
         //var a = new Vector2(1f,1f);
         //var b = new Vector2(BitIncrement(1f),BitIncrement(1f));
         //Debug.Log(a.x == b.x);
