@@ -15,6 +15,7 @@ public class Cuttable : MonoBehaviour
 
     public void Cut(Vector2 startPoint, Vector2 endPoint)
     {
+        Cake.AllCake.Remove(this.gameObject.GetComponent<Cake>());
         startPoint = (Vector2)this.transform.InverseTransformPoint(startPoint);
         endPoint = (Vector2)this.transform.InverseTransformPoint(endPoint);
         var cutMeshes = PolygonCutter.SegmentCut(this.GetComponent<Mesh2DAssigner>().Mesh2D, startPoint, endPoint);
@@ -26,13 +27,13 @@ public class Cuttable : MonoBehaviour
             go.transform.rotation = this.transform.rotation;
             go.transform.localScale = this.transform.localScale;
             go.GetComponent<Mesh2DAssigner>().Mesh2D = cutMesh;
-            go.GetComponent<MeshRenderer>().material = this.GetComponent<MeshRenderer>().material;
+            var mr = go.GetComponent<MeshRenderer>();
+            mr.material = this.GetComponent<MeshRenderer>().material;
             go.GetComponent<Cake>().center = cutMesh.CalcurateCentroid();
             go.transform.parent = CuttingBoard.CuttingBoardGameObject.transform;
             Cake.AddCake(go.GetComponent<Cake>());
             //ColliderCreator.SetCollider(cutMesh.ToMesh(), go.GetComponent<PolygonCollider2D>());
         }
-        Cake.AllCake.Remove(this.gameObject.GetComponent<Cake>());
         Destroy(gameObject);
 
     }
@@ -65,4 +66,5 @@ public class Cuttable : MonoBehaviour
         //     Destroy(gameObject);
         // }
     }
+
 }
