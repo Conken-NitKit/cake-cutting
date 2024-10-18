@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEditor.SearchService;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CuttingFlowManager : MonoBehaviour
 {
@@ -130,6 +132,7 @@ public class CuttingFlowManager : MonoBehaviour
         var result =  new ResultData(targetCuttingCount, (float)stopwatch.Elapsed.TotalSeconds, sizes, Mathf.Max(Cake.AllCakeMass - sizes.Sum(), 0f), CuttingCount);
         ResultDataHandler.Instance.result = result;
         Debug.Log(ResultDataHandler.Instance.result);
+        SceneManager.LoadScene("result");
     }
 
     private void Update()
