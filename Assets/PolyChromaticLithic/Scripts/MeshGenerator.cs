@@ -7,18 +7,12 @@ using static UnityEngine.Rendering.HableCurve;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
-public class MeshGenerator : MonoBehaviour
+static public class MeshGenerator
 {
-    public int segments = 4;  // ‰~‚Ì•ªŠ„”i’¸“_‚Ì”j
-    public float radius = 1f;  // ‰~‚Ì”¼Œa
+    static public int segments = 36;  // ‰~‚Ì•ªŠ„”i’¸“_‚Ì”j
+    static public float radius = 1f;  // ‰~‚Ì”¼Œa
 
-    void Start()
-    {
-        //ƒeƒXƒg—p
-        //this.GetComponent<Mesh2DAssigner>().Mesh2D = GenerateCircleMesh().MergeDuplicateVertices().NormalizeSize();
-    }
-
-    Mesh2D CreateTriangleMesh()
+    static public Mesh2D CreateTriangleMesh()
     {
         Mesh2D mesh2D = new Mesh2D();
         mesh2D.vertices = new List<Vector2>()
@@ -40,7 +34,7 @@ public class MeshGenerator : MonoBehaviour
         return mesh2D;
     }
 
-    Mesh2D GenerateCircleMesh()
+    static public Mesh2D GenerateCircleMesh()
     {
         
         Mesh2D mesh2D = new Mesh2D();
@@ -76,7 +70,7 @@ public class MeshGenerator : MonoBehaviour
         return mesh2D;
     }
 
-    Mesh2D GenerateDonutMesh()
+    static public Mesh2D GenerateDonutMesh()
     {
         Mesh2D mesh2D = new Mesh2D();
         
@@ -115,7 +109,7 @@ public class MeshGenerator : MonoBehaviour
 
     }
 
-    Mesh2D GenerateSquareMesh()
+    static public Mesh2D GenerateSquareMesh()
     {
         Mesh2D mesh2D = new Mesh2D();
 
@@ -144,7 +138,7 @@ public class MeshGenerator : MonoBehaviour
 
     }
 
-    Mesh2D GenerateTriangleMesh()
+    static public Mesh2D GenerateTriangleMesh()
     {
         Mesh2D mesh2D = new Mesh2D();
         mesh2D.vertices = new List<Vector2>()

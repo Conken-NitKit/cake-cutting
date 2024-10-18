@@ -17,6 +17,10 @@ public class CuttingFlowManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI targetText;
     [SerializeField] private GameObject serveButton;
     [SerializeField] private GameObject resultButton;
+    [SerializeField] private GameObject tutorial1;
+    [SerializeField] private GameObject tutorial2;
+
+    public bool ShowTutorial;
 
     public int TargetCuttingCount => targetCuttingCount;
 
@@ -89,6 +93,8 @@ public class CuttingFlowManager : MonoBehaviour
         ArrowDrag = false;
         ArrowCut = true;
         SetStage(0);
+        if (ShowTutorial) ShowTutorial1();
+
     }
 
     //‚»‚ÌŒãŽM‚É•ª‚¯‚é
@@ -98,6 +104,7 @@ public class CuttingFlowManager : MonoBehaviour
         ArrowCut = false;
         table.transform.DOMoveX(10, 0.2f);
         CuttingBoard.CuttingBoardGameObject.transform.DOMoveX(-7, 0.2f);
+        if (ShowTutorial) ShowTutorial2();
     }
 
     void SetStage(int id)
@@ -110,13 +117,17 @@ public class CuttingFlowManager : MonoBehaviour
         SetCakeShape(stagedata.DataList[id].CakeShape);
         serveButton.SetActive(false);
         resultButton.SetActive(false);
+        tutorial1.SetActive(false);
+        tutorial2.SetActive(false);
 
     }
 
     void SetCakeShape(Mesh mesh)
     {
-        cake.GetComponent<Mesh2DAssigner>().Mesh2D = Mesh2D.ToMesh2D(mesh).MergeDuplicateVertices().NormalizeSize();
-        cake.transform.localPosition = stagedata.DataList[0].CakeOffset;
+        cake.GetComponent<Mesh2DAssigner>().Mesh2D = //Mesh2D.ToMesh2D(mesh).MergeDuplicateVertices().NormalizeSize();
+            MeshGenerator.GenerateCircleMesh().MergeDuplicateVertices().NormalizeSize();
+        cake.transform.localPosition = //stagedata.DataList[0].CakeOffset;
+            new Vector3(-5, -5, 0);
     }
 
     public void OnServeButtonClick()
@@ -133,6 +144,46 @@ public class CuttingFlowManager : MonoBehaviour
         ResultDataHandler.Instance.result = result;
         Debug.Log(ResultDataHandler.Instance.result);
         SceneManager.LoadScene("result");
+    }
+
+    public void ShowTutorial1()
+    {
+        tutorial1.SetActive(true);
+        var rectTransform = tutorial1.GetComponent<RectTransform>();
+        rectTransform.localScale = new Vector3(1, 0.01f, 1f);
+        rectTransform.DOScaleY(1, 0.2f);
+        ArrowCut = false;
+        ArrowDrag = false;
+    }
+
+    public void CloseTutorial1()
+    {
+        tutorial1.GetComponent<RectTransform>().DOScaleY(0.01f, 0.2f).OnComplete(() =>
+        {
+            tutorial1.SetActive(false);
+            ArrowCut = true;
+            ArrowDrag = false;
+        });
+    }
+
+    public void ShowTutorial2()
+    {
+        tutorial2.SetActive(true);
+        var rectTransform = tutorial2.GetComponent<RectTransform>();
+        rectTransform.localScale = new Vector3(1, 0.01f, 1f);
+        rectTransform.DOScaleY(1, 0.2f);
+        ArrowCut = false;
+        ArrowDrag = false;
+    }
+
+    public void CloseTutorial2()
+    {
+        tutorial2.GetComponent<RectTransform>().DOScaleY(0.01f, 0.2f).OnComplete(() =>
+        {
+            tutorial2.SetActive(false);
+            ArrowCut = false;
+            ArrowDrag = true;
+        });
     }
 
     private void Update()

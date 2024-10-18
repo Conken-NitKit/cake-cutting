@@ -46,6 +46,7 @@ public class Plate : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        if (Cake.IsDraggingAnyCake()) return;
         mass = 0;
         foreach (var cake in Cake.AllCake)
         {
