@@ -13,10 +13,60 @@ public class CuttingFlowManager : MonoBehaviour
     [SerializeField] private GameObject cake;
     [SerializeField] private GameObject table;
     [SerializeField] private TextMeshProUGUI targetText;
+    [SerializeField] private GameObject serveButton;
+    [SerializeField] private GameObject resultButton;
+
+    public int TargetCuttingCount => targetCuttingCount;
 
     public bool ArrowDrag { get; private set; }
 
     public bool ArrowCut { get; private set; }
+
+    private bool isCakeOverTargetSlices = false;
+
+    //ケーキを指定された個数以上に分割した時、次の段階に進むボタンを有効にする
+    public bool IsCakeOverTargetSlices 
+    {
+        get
+        {
+            return isCakeOverTargetSlices;
+        }
+        set
+        {
+            if (value)
+            {
+                serveButton.SetActive(true);
+                serveButton.GetComponent<RectTransform>().DOAnchorPosX(0, 0.2f);
+            }
+            isCakeOverTargetSlices = value;
+        }
+    }
+
+    private bool isCakeServedOnAllPlates = false;
+
+    //すべての皿に一個以上のケーキを分配した時、結果を表示するボタンを有効にする
+    public bool IsCakeServedOnAllPlates
+    {
+        get
+        {
+            return isCakeServedOnAllPlates;
+        }
+        set
+        {
+            Debug.Log("Recieve:" + value);
+            if (value)
+            {
+                resultButton.SetActive(true);
+                resultButton.GetComponent<RectTransform>().DOAnchorPosX(0, 0.2f);
+            }
+            else
+            {
+                resultButton.SetActive(false);
+                resultButton.GetComponent<RectTransform>().DOAnchorPosX(1000, 0.2f);
+            }
+            isCakeServedOnAllPlates = value;
+        }
+    }
 
     public static CuttingFlowManager Instance { get; private set; }
 
@@ -50,6 +100,9 @@ public class CuttingFlowManager : MonoBehaviour
         slidePlates.Setting(targetCuttingCount);
         targetText.text = "Target:" + targetCuttingCount;
         SetCakeShape(stagedata.DataList[id].CakeShape);
+        serveButton.SetActive(false);
+        resultButton.SetActive(false);
+
     }
 
     void SetCakeShape(Mesh mesh)
@@ -61,14 +114,16 @@ public class CuttingFlowManager : MonoBehaviour
     public void OnServeButtonClick()
     {
         DistributeCakeToPlates();
+        serveButton.GetComponent<RectTransform>().DOAnchorPosX(1000, 0.2f).OnComplete(() => serveButton.SetActive(false));
     }
 
     public void OnResultButtonClick()
     {
         var sizes = Plate.GetSizes();
-        var result =  new ResultData(targetCuttingCount, 0f, sizes, Cake.AllCakeMass - sizes.Sum(), 0);
+        var result =  new ResultData(targetCuttingCount, 0f, sizes, Mathf.Max(Cake.AllCakeMass - sizes.Sum(), 0f), 0);
         ResultDataHandler.Instance.result = result;
         Debug.Log(result);
+        Debug.Log(ResultDataHandler.Instance.result);
     }
 
     private void Update()

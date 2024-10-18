@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -14,9 +15,9 @@ public class Plate : MonoBehaviour
     private float mass = 0;
     private float massTmp = 0;
 
-    static private List<Plate> plates = new List<Plate>();
+    private static List<Plate> plates = new List<Plate>();
 
-    static public float[] GetSizes()
+    public static float[] GetSizes()
     {
         float[] sizes = new float[plates.Count];
         for (int i = 0; i < plates.Count; i++)
@@ -25,6 +26,8 @@ public class Plate : MonoBehaviour
         }
         return sizes;
     }
+
+
 
 
 
@@ -43,21 +46,24 @@ public class Plate : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        cakes.Clear();
         mass = 0;
         foreach (var cake in Cake.AllCake)
         {
             if ((cake.transform.position + cake.center - transform.position).sqrMagnitude <= Mathf.Pow(size, 2))
             {
+                mass += cake.Mass;
+                if (cakes.Contains(cake)) continue;
                 cakes.Add(cake);
                 cake.transform.parent = transform;
-                mass += cake.Mass;
+                CheckCakeServedOnAllPlates();
             }
             else
             {
-                if (cake.transform.parent == transform)
+                if (cakes.Contains(cake))
                 {
                     cake.transform.parent = cuttingBoard.transform;
+                    cakes.Remove(cake);
+                    CheckCakeServedOnAllPlates();
                 }
             }
         }
@@ -66,6 +72,19 @@ public class Plate : MonoBehaviour
             text.text = (mass / Cake.AllCakeMass * 100).ToString() + "%";
         }
         massTmp = mass;
-        
+    }
+
+    private static void CheckCakeServedOnAllPlates()
+    {
+        Debug.Log(string.Join(',', plates.Select(x => x.cakes.Count)));
+        foreach (var plate in plates)
+        {
+            if (plate.cakes.Count == 0)
+            {
+                CuttingFlowManager.Instance.IsCakeServedOnAllPlates = false;
+                return;
+            }
+        }
+        CuttingFlowManager.Instance.IsCakeServedOnAllPlates = true;
     }
 }

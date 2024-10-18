@@ -11,7 +11,7 @@ public class ResultDataHandler
         {
             if (instance == null)
             {
-                instance = new ResultDataHandler(new ResultData(0, 0, System.Array.Empty<float>(), 0, 0));
+                instance = new ResultDataHandler(null);
             }
             return instance;
         }

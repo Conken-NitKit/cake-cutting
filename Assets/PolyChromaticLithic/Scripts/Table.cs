@@ -12,10 +12,7 @@ public class Table : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            OpenTable();
-        }
+        
     }
 
     public void OpenTable()

@@ -52,6 +52,7 @@ public class SlidePlates : MonoBehaviour
    
     private void Update()
     {
+        if (!Cake.IsDraggingAnyCake()) { return; }
         if (isSliding) { return; }
         x = transform.position.x;
         var cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

@@ -51,6 +51,10 @@ public class Cake : MonoBehaviour
     {
         if (AllCake == null) AllCake = new List<Cake>();
         AllCake.Add(cake);
+        if (AllCake.Count >= CuttingFlowManager.Instance.TargetCuttingCount)
+        {
+            CuttingFlowManager.Instance.IsCakeOverTargetSlices = true;
+        }
     }
 
     public float GetMass()
@@ -68,19 +72,28 @@ public class Cake : MonoBehaviour
         GetComponent<MeshRenderer>().material.color = NumberToColor(Mass);
     }
 
+    public static bool IsDraggingAnyCake()
+    {
+        foreach (var cake in AllCake)
+        {
+            if (cake.isDragging) return true;
+        }
+        return false;
+    }
+
     private Vector3 offset;
-    private bool isDrugging = false;
+    private bool isDragging = false;
 
     // Update is called once per frame
     private void Update()
     {
         if (!CuttingFlowManager.Instance.ArrowDrag)
         {
-            isDrugging = false;
+            isDragging = false;
             return;
         }
-        if (Input.GetMouseButtonUp(0)) isDrugging = false;
-        if (isDrugging)
+        if (Input.GetMouseButtonUp(0)) isDragging = false;
+        if (isDragging)
         {
             Vector3 currentScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, -10);
             Vector3 currentPosition = Camera.main.ScreenToWorldPoint(currentScreenPoint) + offset;
@@ -96,7 +109,7 @@ public class Cake : MonoBehaviour
             {
                 if (hit.collider.gameObject == gameObject)
                 {
-                    isDrugging = true;
+                    isDragging = true;
                     offset = transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, -10));
                 }
             }
