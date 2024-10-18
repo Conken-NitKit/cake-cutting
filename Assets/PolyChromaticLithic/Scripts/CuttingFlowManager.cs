@@ -22,7 +22,11 @@ public class CuttingFlowManager : MonoBehaviour
 
     public bool ArrowCut { get; private set; }
 
+    public int CuttingCount { get; set; }
+
     private bool isCakeOverTargetSlices = false;
+
+    private System.Diagnostics.Stopwatch stopwatch;
 
     //ケーキを指定された個数以上に分割した時、次の段階に進むボタンを有効にする
     public bool IsCakeOverTargetSlices 
@@ -78,6 +82,8 @@ public class CuttingFlowManager : MonoBehaviour
     //ステージを読み込む
     void Start()
     {
+        stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
         ArrowDrag = false;
         ArrowCut = true;
         SetStage(0);
@@ -119,10 +125,10 @@ public class CuttingFlowManager : MonoBehaviour
 
     public void OnResultButtonClick()
     {
+        stopwatch.Stop();
         var sizes = Plate.GetSizes();
-        var result =  new ResultData(targetCuttingCount, 0f, sizes, Mathf.Max(Cake.AllCakeMass - sizes.Sum(), 0f), 0);
+        var result =  new ResultData(targetCuttingCount, (float)stopwatch.Elapsed.TotalSeconds, sizes, Mathf.Max(Cake.AllCakeMass - sizes.Sum(), 0f), CuttingCount);
         ResultDataHandler.Instance.result = result;
-        Debug.Log(result);
         Debug.Log(ResultDataHandler.Instance.result);
     }
 

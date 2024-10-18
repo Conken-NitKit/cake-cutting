@@ -50,6 +50,7 @@ public class Cutter : MonoBehaviour
             {
                 cuttable.Cut(pointA, pointB);
             }
+            CuttingFlowManager.Instance.CuttingCount++;
         }
 
         if (isDrugging)
