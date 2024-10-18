@@ -41,3 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: background
+    uniqueID: 2547521425
+    locked: 0
+  - name: cake
+    uniqueID: 2794999739
+    locked: 0
